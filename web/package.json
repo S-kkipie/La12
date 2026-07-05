@@ -14,6 +14,7 @@
   "dependencies": {
     "@tetherto/wdk": "1.0.0-beta.13",
     "@tetherto/wdk-wallet-evm": "1.0.0-beta.15",
+    "better-auth": "^1.6.23",
     "better-sqlite3": "^11.10.0",
     "drizzle-orm": "^0.44.0",
     "next": "15.5.20",

@@ -13,6 +13,7 @@ import mockUsdtAbiJson from "../../packages/abi/MockUSDT.json";
 
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
 const USDT_ADDRESS = process.env.NEXT_PUBLIC_USDT_ADDRESS as `0x${string}` | undefined;
+const ROUND_FACTORY_ADDRESS = process.env.NEXT_PUBLIC_ROUND_FACTORY as `0x${string}` | undefined;
 
 export const revenueShareRoundAbi = revenueShareRoundAbiJson;
 export const roundFactoryAbi = roundFactoryAbiJson;
@@ -143,4 +144,52 @@ export async function distribute(
     args: [revenue],
     chain: activeChain,
   });
+}
+
+export type CreateRoundParams = {
+  name: string;
+  symbol: string;
+  usdtToken: `0x${string}`;
+  club: `0x${string}`;
+  goal: bigint;
+  sharePriceUsdt: bigint;
+  revenueBps: bigint;
+  capMultiple: bigint;
+  deadline: bigint;
+};
+
+/**
+ * Deploys a new RevenueShareRound via RoundFactory, signed by the club's
+ * WDK-derived account, and returns the deployed round's address (read from
+ * the simulated call's return value, then confirmed on-chain by waiting for
+ * the receipt — the round genuinely exists once this resolves).
+ */
+export async function createRoundOnChain(
+  account: LocalAccount,
+  params: CreateRoundParams,
+): Promise<`0x${string}`> {
+  if (!ROUND_FACTORY_ADDRESS) throw new Error("NEXT_PUBLIC_ROUND_FACTORY no configurado");
+  const walletClient = walletClientFor(account);
+
+  const { request, result } = await publicClient.simulateContract({
+    address: ROUND_FACTORY_ADDRESS,
+    abi: roundFactoryAbi,
+    functionName: "createRound",
+    args: [
+      params.name,
+      params.symbol,
+      params.usdtToken,
+      params.club,
+      params.goal,
+      params.sharePriceUsdt,
+      params.revenueBps,
+      params.capMultiple,
+      params.deadline,
+    ],
+    account,
+  });
+
+  const hash = await walletClient.writeContract(request);
+  await publicClient.waitForTransactionReceipt({ hash });
+  return result as `0x${string}`;
 }

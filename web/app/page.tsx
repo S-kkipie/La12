@@ -1,14 +1,16 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { clubs, rounds } from "@/db/schema";
 import { totalRaised, readSafely } from "@/lib/contracts";
 import { RoundProgress } from "@/components/RoundProgress";
-import { EntrarButton } from "@/components/EntrarButton";
 
 const FEATURED_SLUG = "deportivo-san-martin";
 
 export default async function Home() {
+  const session = await auth.api.getSession({ headers: await headers() });
   const [club] = await db.select().from(clubs).where(eq(clubs.slug, FEATURED_SLUG));
   // Only ever surface a *verified* round (see schema.ts) — RoundFactory's
   // createRound() is permissionless on-chain, so anyone could otherwise POST
@@ -36,7 +38,12 @@ export default async function Home() {
           Financiá la temporada de tu club y cobrá tu parte de la recaudación —
           sin banco, sin custodia, con tu propia billetera.
         </p>
-        <EntrarButton />
+        <Link
+          href={session ? (session.user.role === "club" ? "/dashboard" : "/wallet") : "/signup"}
+          className="w-fit rounded-full bg-emerald-600 px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-emerald-700"
+        >
+          {session ? (session.user.role === "club" ? "Ir a mi panel" : "Ir a mi billetera") : "Crear cuenta"}
+        </Link>
       </header>
 
       {club && (

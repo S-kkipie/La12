@@ -1,10 +1,19 @@
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { rounds } from "@/db/schema";
 import { WalletCard } from "@/components/WalletCard";
 import { ClaimButton } from "@/components/ClaimButton";
 
 export default async function WalletPage() {
+  // Both roles can hold a wallet (a club needs USD₮ in theirs before
+  // distribute() can pull from it) — any authenticated session is enough
+  // here, unlike /dashboard which is club-only.
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect("/login");
+
   // Demo has a single seeded round; a fan with positions in several rounds
   // would see one ClaimButton per round here. Verified-only, same reasoning
   // as the other pages (schema.ts) — never point a claim at an unvetted round.

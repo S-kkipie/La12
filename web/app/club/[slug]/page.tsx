@@ -1,5 +1,8 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { clubs, rounds } from "@/db/schema";
 import { totalRaised, readSafely } from "@/lib/contracts";
@@ -12,6 +15,9 @@ type Props = {
 
 export default async function ClubPage({ params }: Props) {
   const { slug } = await params;
+
+  // Browsing stays public (discovery); only investing requires a session.
+  const session = await auth.api.getSession({ headers: await headers() });
 
   const [club] = await db.select().from(clubs).where(eq(clubs.slug, slug));
   if (!club) notFound();
@@ -45,7 +51,16 @@ export default async function ClubPage({ params }: Props) {
             deadline={round.deadline}
             status={round.status}
           />
-          <InvestForm roundAddress={round.contractAddress as `0x${string}`} />
+          {session ? (
+            <InvestForm roundAddress={round.contractAddress as `0x${string}`} />
+          ) : (
+            <div className="rounded-xl border border-black/10 bg-white p-5 text-sm text-zinc-600 dark:border-white/10 dark:bg-black dark:text-zinc-400">
+              <Link href="/login" className="font-medium text-emerald-700 dark:text-emerald-400">
+                Iniciá sesión
+              </Link>{" "}
+              para invertir en este club.
+            </div>
+          )}
         </section>
       ) : (
         <p className="text-zinc-500">Este club todavía no tiene una ronda activa.</p>
