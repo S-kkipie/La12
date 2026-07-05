@@ -11,7 +11,7 @@ const KNOWN_REVERTS: Array<[needle: string, message: string]> = [
   ["exceeds balance", "USD₮ insuficiente — usá 'Conseguir USD₮ de prueba'"],
   ["user rejected", "Cancelaste la transacción"],
   [" 4001", "Cancelaste la transacción"],
-  ["insufficient funds", "Sin ETH para gas — reintentá (faucet de gas)"],
+  ["insufficient funds", "Sin ETH para gas — tocá 'Conseguir ETH de gas' en tu billetera"],
   ["not funding", "La ronda ya cerró el financiamiento"],
   ["not active", "La ronda todavía no está activa"],
   ["nothing to claim", "No tenés recompensa pendiente para reclamar"],

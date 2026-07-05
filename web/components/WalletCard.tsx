@@ -19,6 +19,7 @@ export function WalletCard() {
   const [error, setError] = useState<string | null>(null);
   const [fundingMoonpay, setFundingMoonpay] = useState(false);
   const [fundingFaucet, setFundingFaucet] = useState(false);
+  const [fundingGas, setFundingGas] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!userId) return;
@@ -89,6 +90,29 @@ export function WalletCard() {
     }
   }
 
+  async function fundWithGasFaucet() {
+    if (!address) return;
+    setFundingGas(true);
+    const toastId = toast.loading("Consiguiendo ETH de gas…");
+    try {
+      const res = await fetch("/api/faucet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "No se pudo conseguir ETH de gas.", { id: toastId });
+        return;
+      }
+      toast.success("ETH de gas recibido", { id: toastId });
+    } catch (err) {
+      toast.error(friendlyError(err), { id: toastId });
+    } finally {
+      setFundingGas(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-black">
@@ -128,17 +152,26 @@ export function WalletCard() {
         {fundingMoonpay ? "Abriendo MoonPay…" : "Fondear con MoonPay"}
       </button>
 
-      <div className="flex flex-col gap-1 rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
+      <div className="flex flex-col gap-2 rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
         <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          USD₮ de prueba — solo demo local
+          Fondos de prueba — solo demo local
         </span>
-        <button
-          onClick={fundWithTestFaucet}
-          disabled={fundingFaucet}
-          className="self-start rounded-full border border-emerald-600 px-5 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-950"
-        >
-          {fundingFaucet ? "Consiguiendo…" : "Conseguir 5,000 USD₮ de prueba"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={fundWithTestFaucet}
+            disabled={fundingFaucet}
+            className="rounded-full border border-emerald-600 px-5 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-950"
+          >
+            {fundingFaucet ? "Consiguiendo…" : "Conseguir 5,000 USD₮ de prueba"}
+          </button>
+          <button
+            onClick={fundWithGasFaucet}
+            disabled={fundingGas}
+            className="rounded-full border border-emerald-600 px-5 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-950"
+          >
+            {fundingGas ? "Consiguiendo…" : "Conseguir ETH de gas"}
+          </button>
+        </div>
       </div>
 
       <div>

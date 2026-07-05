@@ -5,12 +5,20 @@
 // is linked, so a dropped request could otherwise leave someone stuck).
 "use client";
 
+import { toast } from "sonner";
 import { createWallet } from "./wdk";
 
 /**
  * Creates (or loads) this user's local WDK wallet and POSTs its address to
  * the server. Idempotent — /api/account/wallet upserts, and createWallet()
  * itself no-ops if a wallet already exists on this device for this userId.
+ *
+ * A freshly minted wallet (isNew) has 0 ETH, so its very first invest/
+ * approve would otherwise fail with "insufficient funds for gas" — best-
+ * effort fund it via the gas sponsor (/api/faucet). This is deliberately
+ * best-effort: on a real testnet without SPONSOR_PK configured (or if the
+ * relayer is dry) it fails silently past a soft toast, since the "Conseguir
+ * ETH de gas" button on /wallet (WalletCard) is the fallback either way.
  *
  * TODO(wire): this only recovers the wallet on the SAME browser/device that
  * created it — the seed never leaves the device by design (self-custody), so
@@ -19,7 +27,7 @@ import { createWallet } from "./wdk";
  * scope for this fix.
  */
 export async function ensureWalletLinked(userId: string): Promise<string> {
-  const { address } = await createWallet(userId);
+  const { address, isNew } = await createWallet(userId);
 
   const res = await fetch("/api/account/wallet", {
     method: "POST",
@@ -31,5 +39,29 @@ export async function ensureWalletLinked(userId: string): Promise<string> {
     throw new Error(data.error ?? "No se pudo vincular la billetera");
   }
 
+  if (isNew) {
+    await fundGasBestEffort(address);
+  }
+
   return address;
+}
+
+async function fundGasBestEffort(address: string): Promise<void> {
+  try {
+    const res = await fetch("/api/faucet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      toast.warning(
+        data.error ?? "No se pudo cubrir el gas automáticamente — usá 'Conseguir ETH de gas' en tu billetera.",
+      );
+    }
+  } catch {
+    toast.warning(
+      "No se pudo cubrir el gas automáticamente — usá 'Conseguir ETH de gas' en tu billetera.",
+    );
+  }
 }
