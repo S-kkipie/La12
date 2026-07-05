@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useCurrentUserId } from "@/lib/auth-client";
 import { createWallet, getUsdtBalance } from "@/lib/wdk";
+import { walletMode } from "@/lib/walletMode";
 import { usdtToFiat } from "@/lib/pricing";
 import { getHistory, type HistoryEntry } from "@/lib/indexer";
 import { formatUsdt, formatFiat } from "@/lib/format";
@@ -152,27 +153,33 @@ export function WalletCard() {
         {fundingMoonpay ? "Abriendo MoonPay…" : "Fondear con MoonPay"}
       </button>
 
-      <div className="flex flex-col gap-2 rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          Fondos de prueba — solo demo local
-        </span>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={fundWithTestFaucet}
-            disabled={fundingFaucet}
-            className="rounded-full border border-emerald-600 px-5 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-950"
-          >
-            {fundingFaucet ? "Consiguiendo…" : "Conseguir 5,000 USD₮ de prueba"}
-          </button>
-          <button
-            onClick={fundWithGasFaucet}
-            disabled={fundingGas}
-            className="rounded-full border border-emerald-600 px-5 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-950"
-          >
-            {fundingGas ? "Consiguiendo…" : "Conseguir ETH de gas"}
-          </button>
+      {walletMode() === "standard" ? (
+        <div className="flex flex-col gap-2 rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            Fondos de prueba — solo demo local
+          </span>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={fundWithTestFaucet}
+              disabled={fundingFaucet}
+              className="rounded-full border border-emerald-600 px-5 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-950"
+            >
+              {fundingFaucet ? "Consiguiendo…" : "Conseguir 5,000 USD₮ de prueba"}
+            </button>
+            <button
+              onClick={fundWithGasFaucet}
+              disabled={fundingGas}
+              className="rounded-full border border-emerald-600 px-5 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-950"
+            >
+              {fundingGas ? "Consiguiendo…" : "Conseguir ETH de gas"}
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-zinc-300 p-3 text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+          Gas pagado en USD₮ (sin ETH)
+        </div>
+      )}
 
       <div>
         <div className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">Movimientos</div>

@@ -7,18 +7,21 @@
 
 import { toast } from "sonner";
 import { createWallet } from "./wdk";
+import { walletMode } from "./walletMode";
 
 /**
  * Creates (or loads) this user's local WDK wallet and POSTs its address to
  * the server. Idempotent — /api/account/wallet upserts, and createWallet()
  * itself no-ops if a wallet already exists on this device for this userId.
  *
- * A freshly minted wallet (isNew) has 0 ETH, so its very first invest/
- * approve would otherwise fail with "insufficient funds for gas" — best-
- * effort fund it via the gas sponsor (/api/faucet). This is deliberately
- * best-effort: on a real testnet without SPONSOR_PK configured (or if the
- * relayer is dry) it fails silently past a soft toast, since the "Conseguir
- * ETH de gas" button on /wallet (WalletCard) is the fallback either way.
+ * A freshly minted wallet (isNew) has 0 ETH, so in `standard` mode its very
+ * first invest/approve would otherwise fail with "insufficient funds for
+ * gas" — best-effort fund it via the gas sponsor (/api/faucet). This is
+ * deliberately best-effort: on a real testnet without SPONSOR_PK configured
+ * (or if the relayer is dry) it fails silently past a soft toast, since the
+ * "Conseguir ETH de gas" button on /wallet (WalletCard) is the fallback
+ * either way. Skipped entirely in `erc4337` mode — that wallet pays gas in
+ * USD₮ via the paymaster and never needs ETH (see walletMode.ts).
  *
  * TODO(wire): this only recovers the wallet on the SAME browser/device that
  * created it — the seed never leaves the device by design (self-custody), so
@@ -39,7 +42,7 @@ export async function ensureWalletLinked(userId: string): Promise<string> {
     throw new Error(data.error ?? "No se pudo vincular la billetera");
   }
 
-  if (isNew) {
+  if (isNew && walletMode() === "standard") {
     await fundGasBestEffort(address);
   }
 
