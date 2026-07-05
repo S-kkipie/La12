@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useCurrentUserId } from "@/lib/auth-client";
-import { createWallet, signer } from "@/lib/wdk";
-import { claim, pendingReward, publicClient } from "@/lib/contracts";
+import { createWallet, getWallet } from "@/lib/wdk";
+import { claim, pendingReward } from "@/lib/contracts";
 import { formatUsdt } from "@/lib/format";
 import { friendlyError } from "@/lib/txError";
 
@@ -37,9 +37,8 @@ export function ClaimButton({ roundAddress }: Props) {
     const toastId = toast.loading("Reclamando…");
     try {
       // claim() pulls nothing from the caller (only pays out) — no approve needed.
-      const account = await signer(userId);
-      const hash = await claim(account, roundAddress);
-      await publicClient.waitForTransactionReceipt({ hash });
+      const wallet = await getWallet(userId);
+      await claim(wallet, roundAddress);
 
       toast.success("¡Cobrado!", { id: toastId });
       await refresh();

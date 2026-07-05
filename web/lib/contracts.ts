@@ -1,12 +1,16 @@
 // viem client + typed helpers for RevenueShareRound (spec §4). Reads go
 // through a plain publicClient (used client-side by pages and server-side by
-// /api/sync); writes go through a walletClient built on the WDK-derived
-// signer from wdk.ts (see lib/wdk.ts `signer()` for how the two connect).
+// /api/sync, and work identically in both wallet modes); writes encode
+// calldata with viem and send it through a `WalletHandle` from lib/wdk.ts
+// (`getWallet(userId)`), which hides whether that's a plain viem transaction
+// (standard mode) or a UserOperation paid in USD₮ (erc4337 mode) — see
+// walletMode.ts and wdk.ts `getWallet()`.
 //
 // ABIs come straight from the Foundry build in `contracts/` (see
 // packages/abi/, the shared boundary between contracts and web per spec §3).
-import { createPublicClient, createWalletClient, http, type LocalAccount } from "viem";
+import { createPublicClient, encodeFunctionData, http } from "viem";
 import { activeChain } from "./chain";
+import type { WalletHandle } from "./wdk";
 import revenueShareRoundAbiJson from "../../packages/abi/RevenueShareRound.json";
 import roundFactoryAbiJson from "../../packages/abi/RoundFactory.json";
 import mockUsdtAbiJson from "../../packages/abi/MockUSDT.json";
@@ -23,10 +27,6 @@ export const publicClient = createPublicClient({
   chain: activeChain,
   transport: http(RPC_URL),
 });
-
-function walletClientFor(account: LocalAccount) {
-  return createWalletClient({ account, chain: activeChain, transport: http(RPC_URL) });
-}
 
 /** Round lifecycle enum as declared on-chain (RevenueShareRound.State). */
 export const ROUND_STATE = ["Funding", "Active", "Closed"] as const;
@@ -96,54 +96,37 @@ export async function usdtAllowance(owner: `0x${string}`, spender: `0x${string}`
 }
 
 /** Approves `spender` for `amount` USD₮ and waits for the tx to be mined. */
-export async function approveUsdt(account: LocalAccount, spender: `0x${string}`, amount: bigint) {
+export async function approveUsdt(wallet: WalletHandle, spender: `0x${string}`, amount: bigint) {
   if (!USDT_ADDRESS) throw new Error("NEXT_PUBLIC_USDT_ADDRESS no configurado");
-  const walletClient = walletClientFor(account);
-  const hash = await walletClient.writeContract({
-    address: USDT_ADDRESS,
-    abi: mockUsdtAbi,
-    functionName: "approve",
-    args: [spender, amount],
-    chain: activeChain,
-  });
+  const data = encodeFunctionData({ abi: mockUsdtAbi, functionName: "approve", args: [spender, amount] });
+  const hash = await wallet.execute({ to: USDT_ADDRESS, data });
   await publicClient.waitForTransactionReceipt({ hash });
   return hash;
 }
 
-export async function invest(account: LocalAccount, roundAddress: `0x${string}`, amount: bigint) {
-  const walletClient = walletClientFor(account);
-  return walletClient.writeContract({
-    address: roundAddress,
-    abi: revenueShareRoundAbi,
-    functionName: "invest",
-    args: [amount],
-    chain: activeChain,
-  });
+export async function invest(wallet: WalletHandle, roundAddress: `0x${string}`, amount: bigint) {
+  const data = encodeFunctionData({ abi: revenueShareRoundAbi, functionName: "invest", args: [amount] });
+  const hash = await wallet.execute({ to: roundAddress, data });
+  await publicClient.waitForTransactionReceipt({ hash });
+  return hash;
 }
 
-export async function claim(account: LocalAccount, roundAddress: `0x${string}`) {
-  const walletClient = walletClientFor(account);
-  return walletClient.writeContract({
-    address: roundAddress,
-    abi: revenueShareRoundAbi,
-    functionName: "claim",
-    chain: activeChain,
-  });
+export async function claim(wallet: WalletHandle, roundAddress: `0x${string}`) {
+  const data = encodeFunctionData({ abi: revenueShareRoundAbi, functionName: "claim" });
+  const hash = await wallet.execute({ to: roundAddress, data });
+  await publicClient.waitForTransactionReceipt({ hash });
+  return hash;
 }
 
-export async function distribute(
-  account: LocalAccount,
-  roundAddress: `0x${string}`,
-  revenue: bigint,
-) {
-  const walletClient = walletClientFor(account);
-  return walletClient.writeContract({
-    address: roundAddress,
+export async function distribute(wallet: WalletHandle, roundAddress: `0x${string}`, revenue: bigint) {
+  const data = encodeFunctionData({
     abi: revenueShareRoundAbi,
     functionName: "distribute",
     args: [revenue],
-    chain: activeChain,
   });
+  const hash = await wallet.execute({ to: roundAddress, data });
+  await publicClient.waitForTransactionReceipt({ hash });
+  return hash;
 }
 
 export type CreateRoundParams = {
@@ -160,36 +143,39 @@ export type CreateRoundParams = {
 
 /**
  * Deploys a new RevenueShareRound via RoundFactory, signed by the club's
- * WDK-derived account, and returns the deployed round's address (read from
- * the simulated call's return value, then confirmed on-chain by waiting for
- * the receipt — the round genuinely exists once this resolves).
+ * WDK-derived wallet, and returns the deployed round's address (predicted by
+ * a read-only simulation — no key needed for that part, just the caller's
+ * address — then confirmed on-chain by waiting for the real transaction's
+ * receipt: the round genuinely exists once this resolves).
  */
 export async function createRoundOnChain(
-  account: LocalAccount,
+  wallet: WalletHandle,
   params: CreateRoundParams,
 ): Promise<`0x${string}`> {
   if (!ROUND_FACTORY_ADDRESS) throw new Error("NEXT_PUBLIC_ROUND_FACTORY no configurado");
-  const walletClient = walletClientFor(account);
 
-  const { request, result } = await publicClient.simulateContract({
+  const args = [
+    params.name,
+    params.symbol,
+    params.usdtToken,
+    params.club,
+    params.goal,
+    params.sharePriceUsdt,
+    params.revenueBps,
+    params.capMultiple,
+    params.deadline,
+  ] as const;
+
+  const { result } = await publicClient.simulateContract({
     address: ROUND_FACTORY_ADDRESS,
     abi: roundFactoryAbi,
     functionName: "createRound",
-    args: [
-      params.name,
-      params.symbol,
-      params.usdtToken,
-      params.club,
-      params.goal,
-      params.sharePriceUsdt,
-      params.revenueBps,
-      params.capMultiple,
-      params.deadline,
-    ],
-    account,
+    args,
+    account: wallet.address,
   });
 
-  const hash = await walletClient.writeContract(request);
+  const data = encodeFunctionData({ abi: roundFactoryAbi, functionName: "createRound", args });
+  const hash = await wallet.execute({ to: ROUND_FACTORY_ADDRESS, data });
   await publicClient.waitForTransactionReceipt({ hash });
   return result as `0x${string}`;
 }

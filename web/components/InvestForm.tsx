@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCurrentUserId } from "@/lib/auth-client";
-import { createWallet, signer } from "@/lib/wdk";
-import { approveUsdt, invest, publicClient, usdtAllowance } from "@/lib/contracts";
+import { createWallet, getWallet } from "@/lib/wdk";
+import { approveUsdt, invest, usdtAllowance } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
 import { friendlyError } from "@/lib/txError";
 
@@ -24,20 +24,19 @@ export function InvestForm({ roundAddress, onInvested }: Props) {
     const toastId = toast.loading("Preparando…");
     try {
       await createWallet(userId); // no-ops if a wallet already exists
-      const account = await signer(userId);
+      const wallet = await getWallet(userId);
       const value = parseUsdt(amount);
 
       // invest() does a transferFrom under the hood — approve first if the
       // round doesn't already have enough allowance from a previous invest.
-      const allowance = await usdtAllowance(account.address, roundAddress);
+      const allowance = await usdtAllowance(wallet.address, roundAddress);
       if (allowance < value) {
         toast.loading("Aprobando USD₮…", { id: toastId });
-        await approveUsdt(account, roundAddress, value);
+        await approveUsdt(wallet, roundAddress, value);
       }
 
       toast.loading("Invirtiendo…", { id: toastId });
-      const hash = await invest(account, roundAddress, value);
-      await publicClient.waitForTransactionReceipt({ hash });
+      const hash = await invest(wallet, roundAddress, value);
 
       toast.success("¡Inversión confirmada!", { id: toastId });
       setStatus("done");

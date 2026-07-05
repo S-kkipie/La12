@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCurrentUserId } from "@/lib/auth-client";
-import { createWallet, signer } from "@/lib/wdk";
+import { createWallet, getWallet } from "@/lib/wdk";
 import { createRoundOnChain } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
 import { friendlyError } from "@/lib/txError";
@@ -32,10 +32,10 @@ export function CreateRoundForm({ clubName, clubWalletAddress, usdtAddress }: Pr
     const toastId = toast.loading("Desplegando ronda…");
     try {
       await createWallet(userId); // no-ops if a wallet already exists
-      const account = await signer(userId);
+      const wallet = await getWallet(userId);
       const deadline = BigInt(Math.floor(Date.now() / 1000) + Number(deadlineDays) * 86_400);
 
-      const contractAddress = await createRoundOnChain(account, {
+      const contractAddress = await createRoundOnChain(wallet, {
         name: `${clubName} Round`,
         symbol: "LDR",
         usdtToken: usdtAddress,
