@@ -11,6 +11,12 @@
 // the signUp/signIn response) at the call site; this module stays
 // auth-agnostic and just treats it as an opaque namespacing key.
 //
+// Dual wallet mode (see walletMode.ts): "standard" registers the plain EOA
+// `WalletManagerEvm` (local anvil demo, unchanged); "erc4337" registers the
+// Safe smart-account `WalletManagerEvmErc4337` instead, gas paid in USD₮ via
+// a paymaster. `getWallet()` hides the difference behind one `WalletHandle`
+// so lib/contracts.ts and components never need to branch on mode.
+//
 // This module must only be imported from "use client" components — importing
 // it from a Server Component or API route will throw (indexedDB is undefined
 // server-side).
@@ -18,17 +24,19 @@
 
 import WDK from "@tetherto/wdk";
 import WalletManagerEvm, { type WalletAccountEvm } from "@tetherto/wdk-wallet-evm";
+import WalletManagerEvmErc4337 from "@tetherto/wdk-wallet-evm-erc-4337";
+import { createWalletClient, http, type LocalAccount } from "viem";
 import { toAccount } from "viem/accounts";
-import type { LocalAccount } from "viem";
+import { activeChain, CHAIN_ID } from "./chain";
+import { walletMode, erc4337Config, USDT_ADDRESS } from "./walletMode";
 import { idbGet, idbSet } from "./storage";
+
+export { USDT_ADDRESS };
 
 const SEED_KEY_PREFIX = "wdk:encrypted-seed:";
 const DEVICE_KEY_KEY = "wdk:device-key"; // one encryption key per device, shared by all local accounts
 
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
-const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 11155111); // Sepolia
-export const USDT_ADDRESS = (process.env.NEXT_PUBLIC_USDT_ADDRESS ??
-  "0x0000000000000000000000000000000000dEaD") as `0x${string}`; // TODO(wire): real mock USD₮ address on Sepolia (spec §9)
 
 type EncryptedPayload = { iv: number[]; ciphertext: number[] };
 
@@ -70,6 +78,19 @@ async function decryptSeed(payload: EncryptedPayload): Promise<string> {
   return new TextDecoder().decode(plaintext);
 }
 
+/**
+ * Decrypts this user's stored seed. Shared by every path that needs the raw
+ * seed (the standard-mode `loadAccount` below, and `getWallet`'s erc4337
+ * branch) so the decrypt logic lives in exactly one place.
+ */
+async function loadSeedFor(userId: string): Promise<string> {
+  const payload = await idbGet<EncryptedPayload>(seedKey(userId));
+  if (!payload) {
+    throw new Error("No hay wallet todavía — llamá a createWallet() primero.");
+  }
+  return decryptSeed(payload);
+}
+
 // One cached account per userId — never a single shared slot. Logging in as
 // a different account in the same tab must never hand back a stale account.
 const cachedAccounts = new Map<string, WalletAccountEvm>();
@@ -78,15 +99,7 @@ async function loadAccount(userId: string, freshSeed?: string): Promise<WalletAc
   const cached = cachedAccounts.get(userId);
   if (cached) return cached;
 
-  const seed =
-    freshSeed ??
-    (await (async () => {
-      const payload = await idbGet<EncryptedPayload>(seedKey(userId));
-      if (!payload) {
-        throw new Error("No hay wallet todavía — llamá a createWallet() primero.");
-      }
-      return decryptSeed(payload);
-    })());
+  const seed = freshSeed ?? (await loadSeedFor(userId));
 
   const wdk = new WDK(seed).registerWallet("ethereum", WalletManagerEvm, {
     provider: RPC_URL,
@@ -146,6 +159,9 @@ export async function transferUsdt(userId: string, recipient: `0x${string}`, amo
  * WDK doesn't hand out the raw private key (memory-safe by design), so this
  * delegates every signature to the account's own sign/signTransaction/
  * signTypedData methods instead of constructing a viem PrivateKeyAccount.
+ *
+ * Standard mode only — erc4337 accounts sign UserOperations, not viem
+ * transactions; see `getWallet()`'s `execute()` for that path.
  */
 export async function signer(userId: string): Promise<LocalAccount> {
   const account = await getAccount(userId);
@@ -201,4 +217,73 @@ export async function signer(userId: string): Promise<LocalAccount> {
       })) as `0x${string}`;
     },
   });
+}
+
+/**
+ * Unified wallet surface `lib/contracts.ts` and components drive contract
+ * calls through, regardless of wallet mode — see walletMode.ts. `execute()`
+ * is the one primitive that matters here: standard mode signs+sends a plain
+ * viem transaction; erc4337 mode signs+sends a UserOperation (gas pulled
+ * from the smart account's own USD₮ by the paymaster). Both return a real,
+ * minable tx/UserOp hash that `waitForTransactionReceipt` can wait on.
+ */
+export type WalletHandle = {
+  address: `0x${string}`;
+  mode: ReturnType<typeof walletMode>;
+  execute(call: { to: `0x${string}`; data: `0x${string}`; value?: bigint }): Promise<`0x${string}`>;
+  getUsdtBalance(): Promise<bigint>;
+  transferUsdt(recipient: `0x${string}`, amount: bigint): Promise<`0x${string}`>;
+};
+
+export async function getWallet(userId: string): Promise<WalletHandle> {
+  const seed = await loadSeedFor(userId);
+
+  if (walletMode() === "erc4337") {
+    const wallet = new WalletManagerEvmErc4337(seed, erc4337Config());
+    const account = await wallet.getAccount(0);
+    const address = (await account.getAddress()) as `0x${string}`;
+
+    // VERIFIED against the installed package's types (types/src/
+    // wallet-account-read-only-evm-erc-4337.d.ts): `EvmErc4337Transaction`
+    // has an optional `data?: string` field ("The call's data in hex
+    // format"), so sendTransaction({ to, value, data }) does carry arbitrary
+    // contract calldata as a UserOperation — the plan's "biggest unknown"
+    // resolves in our favor, no adapter needed.
+    return {
+      address,
+      mode: "erc4337",
+      async execute({ to, data, value }) {
+        const result = await account.sendTransaction({ to, value: value ?? 0n, data });
+        return result.hash as `0x${string}`;
+      },
+      async getUsdtBalance() {
+        return account.getTokenBalance(USDT_ADDRESS);
+      },
+      async transferUsdt(recipient, amount) {
+        const result = await account.transfer({ token: USDT_ADDRESS, recipient, amount });
+        return result.hash as `0x${string}`;
+      },
+    };
+  }
+
+  // standard
+  const account = await loadAccount(userId, seed);
+  const address = (await account.getAddress()) as `0x${string}`;
+  const local = await signer(userId);
+  const walletClient = createWalletClient({ account: local, chain: activeChain, transport: http(RPC_URL) });
+
+  return {
+    address,
+    mode: "standard",
+    async execute({ to, data, value }) {
+      return walletClient.sendTransaction({ to, data, value: value ?? 0n, chain: activeChain });
+    },
+    async getUsdtBalance() {
+      return account.getTokenBalance(USDT_ADDRESS);
+    },
+    async transferUsdt(recipient, amount) {
+      const result = await account.transfer({ token: USDT_ADDRESS, recipient, amount });
+      return result.hash as `0x${string}`;
+    },
+  };
 }
