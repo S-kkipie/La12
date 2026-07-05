@@ -1,0 +1,147 @@
+# La Doce ⚽ (La 12)
+
+> *"Compra un pedazo de los ingresos de tu club. Inviertes en USDt, cobras en USDt, tus llaves son tuyas."*
+
+Tokenización de clubes de fútbol: los hinchas financian a su club y cobran parte de los
+ingresos, con wallet self-custody y liquidación en USDt. Sin banco, sin intermediario.
+
+El nombre **La Doce** = "el jugador número 12", la hinchada. El hincha deja de ser espectador
+y pasa a ser dueño de un pedazo del club.
+
+---
+
+## 1. El Hackathon — Tether Developers Cup 🏆
+
+- **Organiza:** Tether · plataforma: DoraHacks
+- **URL:** https://dorahacks.io/hackathon/tether-developers-cup
+- **Formato:** competencia global, temática fútbol, estilo torneo de eliminación (knockout).
+- **Modalidad:** virtual. Gratis. Solo o equipo hasta 4. Mayores de 18.
+- **Prize pool:** 8,000 USDt
+  - **1,000 USDt** por track ganador (Pears, QVAC, WDK)
+  - **5,000 USDt** Cup Champion (mejor proyecto global)
+
+### Fechas clave
+| Fecha | Hito |
+|---|---|
+| Jun 28 | Registro abre / building empieza |
+| Jul 6 | Cierra registro, se bloquea el campo |
+| Jul 8 | Ronda de 16 — se espera prototipo + demo |
+| Jul 12 | Semifinal — corte a 4 finalistas |
+| **Jul 14, 23:59 (GMT-7)** | **Deadline de submission en DoraHacks** |
+| Jul 15 | Final — pitch en vivo |
+| Jul 19 | Ganadores anunciados |
+
+### Tracks (elegimos WDK)
+- **Pears** — apps P2P (Hyperswarm, Hypercore, Autobase). Docs: docs.pears.com
+- **QVAC** — IA local on-device, sin cloud. Docs: qvac.tether.io
+- **WDK** — Wallet Development Kit: wallets self-custody + pagos. Docs: wdk.tether.io ← **NUESTRO TRACK**
+
+### Requisitos de submission
+- Repo público (GitHub/GitLab/Bitbucket) con licencia permisiva (Apache 2.0 / MIT).
+- Instrucciones de setup claras (que un juez lo corra out-of-the-box).
+- Video demo, máx **3 min**, YouTube unlisted.
+- El proyecto **debe encajar en el tema fútbol**.
+
+### Criterios de evaluación (1–5 cada uno)
+- Ambición técnica
+- Experiencia de usuario (UX)
+- Utilidad en el mundo real
+- Creatividad
+- **Uso real de la plataforma Tether elegida** (WDK)
+
+---
+
+## 2. La Idea
+
+### Problema
+- Los clubes de fútbol chicos (Liga 2, Copa Perú, barrio) **son MYPES**: generan ingresos,
+  tienen hinchas, crecen — pero **nadie les presta capital**. Bancos no; solo prestamistas caros.
+- Miles de hinchas quieren apoyar (y ganar) pero no hay forma de invertir en su club.
+- Hay un vacío enorme entre el club y su gente.
+
+### Solución
+Un club emite **revenue-share tokenizado**: pide capital en USDt y a cambio reparte un % de un
+ingreso visible (taquilla, merch) por N meses hasta un múltiplo cap. El hincha invierte USDt,
+recibe un token, y cobra su parte de cada reparto — todo en su wallet self-custody.
+
+**El gancho:** el banco no le presta al club del barrio; el hincha sí — invierte por amor + retorno.
+Eso resuelve el arranque en frío y la confianza que mata a todo marketplace.
+
+### Ejemplo
+> Deportivo San Martín (barrio) necesita **S/40,000 (~USDt)** para reflectores.
+> Emite revenue-share: **8% de la taquilla por 24 meses**, cap 1.5x.
+> 400 hinchas invierten ~USDt 100 c/u. Cobran su parte cada partido, automático, en USDt.
+
+---
+
+## 3. Por qué WDK (track elegido)
+
+Todo el producto **es flujo de dinero** → WDK es la estrella natural. Instrumento elegido:
+**revenue-share** (NO equity — evita regulación de valores y custodia).
+
+### Los flujos WDK (esto ES el demo)
+| # | Flujo | Qué hace WDK |
+|---|---|---|
+| 1 | Hincha se registra | wallet embebida se crea sola (self-custody bajo el capó, UX tipo Yape) |
+| 2 | Hincha fondea | deposita USDt en su wallet |
+| 3 | Hincha invierte | manda USDt → contrato de ronda del club → recibe token |
+| 4 | Club cobra | al llenar la meta, USDt salta a la wallet WDK del club |
+| 5 | Reparto | ingreso entra → contrato reparte USDt pro-rata a holders → cae en su wallet |
+| 6 | Retiro | hincha retira USDt cuando quiere — llaves suyas, nadie las congela |
+
+**Momento "wow":** cobro en la fuente — la taquilla del club entra por la wallet WDK y el contrato
+retiene el % automático antes de pasar el resto. Sin oráculo, sin confianza, todo on-chain en USDt.
+
+---
+
+## 4. MVP (11 días)
+
+1. Club crea perfil + publica ronda (monto, %, cap, plazo).
+2. Hincha: wallet WDK embebida → invierte en USDt.
+3. Contrato de revenue-share reparte USDt pro-rata a holders.
+4. Skin de fútbol encima (club peruano ficticio "Deportivo San Martín" para el demo).
+
+### Fuera de alcance (mencionar como roadmap, NO construir)
+- **MYPE Score con IA** → fase 2 con QVAC (IA on-device lee finanzas y da score de riesgo).
+- **Mercado secundario P2P** → fase 2 con Pears (liquidez, revender el token).
+- **Equity real / notas convertibles** → cuando haya licencia y estructura legal.
+
+---
+
+## 5. Visión a largo plazo
+
+La Doce empieza por el fútbol (beachhead: clubes = MYPES con hinchas emocionalmente comprometidos),
+pero el mismo motor sirve para **cualquier empresa privada del Perú y LATAM**: el mercado privado
+digital donde cualquier negocio levanta capital y cualquier persona invierte desde montos chicos,
+con transparencia, liquidez y (fase 2) riesgo calificado por IA local. Blockchain invisible;
+dividendos en USDt.
+
+---
+
+## 6. Riesgo #1 — regulatorio (decirlo antes que el juez)
+
+Emitir "acciones" = entrar en regulación de mercado de valores. Por eso arrancamos con
+**revenue-share / derechos económicos** (instrumento más liviano, no-custodio) y self-custody
+(el usuario tiene sus llaves, la plataforma no custodia fondos). Antecedente a NO repetir:
+**Football Index** colapsó por ser gambling opaco sin propiedad real — nosotros: propiedad
+on-chain, transparente, self-custody.
+
+---
+
+## 7. Decisiones abiertas
+
+- [ ] Confirmar red USDt que expone WDK (¿USDT0 / Tron / TON / Ethereum?) — leer wdk.tether.io.
+- [ ] Club demo: ficticio (predecible) vs real (más impacto).
+- [ ] Pantallas del demo (flujo hincha + flujo club).
+- [ ] Equipo: quién hace smart-contract vs integración WDK vs frontend.
+
+---
+
+## Stack
+- **Tether WDK** — wallets self-custody + pagos USDt (core)
+- **USDt** — unidad de cuenta de todo (funding, repartos, retiros)
+- Smart contract revenue-share (red por confirmar según WDK)
+- Frontend (por definir)
+
+## Licencia
+MIT (requisito de la hack).
