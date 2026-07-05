@@ -17,8 +17,9 @@ async function main() {
         logoUrl: "/clubs/deportivo-san-martin.svg",
         description:
           "Club de barrio con hinchada de fierro. La Doce financia la próxima temporada a cambio de un porcentaje de la recaudación.",
-        // TODO(wire): replace with the club's real WDK-derived payout wallet once onboarded.
-        walletAddress: "0x00000000000000000000000000000000000000C1",
+        // Club payout wallet. From DEMO_CLUB_WALLET (set to the deployer/club
+        // address after a deploy); placeholder otherwise.
+        walletAddress: process.env.DEMO_CLUB_WALLET ?? "0x00000000000000000000000000000000000000C1",
       })
       .returning();
     console.log("seeded club:", club.slug);
@@ -39,9 +40,11 @@ async function main() {
       .insert(rounds)
       .values({
         clubId: club.id,
-        // TODO(wire): replace with the real RevenueShareRound address once RoundFactory deploys it.
-        contractAddress: "0x00000000000000000000000000000000000000D3",
-        goal: "50000000000", // 50,000 USD₮ (6 decimals)
+        // Deployed RevenueShareRound. From DEMO_ROUND_ADDRESS after a deploy
+        // (local anvil or Sepolia); placeholder otherwise.
+        contractAddress:
+          process.env.DEMO_ROUND_ADDRESS ?? "0x00000000000000000000000000000000000000D3",
+        goal: process.env.DEMO_ROUND_GOAL ?? "40000000000", // 40,000 USD₮ (matches Deploy.s.sol default)
         sharePrice: "1000000", // 1 USD₮ per share
         revenueBps: 800, // 8% retained by the round
         capMultiple: 15000, // 1.5x (bps-scaled, matches the contract's BPS_DENOM = 10_000)

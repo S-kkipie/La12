@@ -5,7 +5,7 @@
 // client bundle.
 import { createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { sepolia } from "viem/chains";
+import { activeChain } from "./chain";
 
 const RPC_URL =
   process.env.RPC_URL ?? process.env.NEXT_PUBLIC_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
@@ -25,7 +25,7 @@ export async function fundGas(recipient: `0x${string}`): Promise<FundGasResult> 
   }
 
   const account = privateKeyToAccount(pk as `0x${string}`);
-  const walletClient = createWalletClient({ account, chain: sepolia, transport: http(RPC_URL) });
+  const walletClient = createWalletClient({ account, chain: activeChain, transport: http(RPC_URL) });
 
   const hash = await walletClient.sendTransaction({
     to: recipient,

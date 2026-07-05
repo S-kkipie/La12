@@ -6,7 +6,7 @@
 // ABIs come straight from the Foundry build in `contracts/` (see
 // packages/abi/, the shared boundary between contracts and web per spec §3).
 import { createPublicClient, createWalletClient, http, type LocalAccount } from "viem";
-import { sepolia } from "viem/chains";
+import { activeChain } from "./chain";
 import revenueShareRoundAbiJson from "../../packages/abi/RevenueShareRound.json";
 import roundFactoryAbiJson from "../../packages/abi/RoundFactory.json";
 
@@ -16,12 +16,12 @@ export const revenueShareRoundAbi = revenueShareRoundAbiJson;
 export const roundFactoryAbi = roundFactoryAbiJson;
 
 export const publicClient = createPublicClient({
-  chain: sepolia,
+  chain: activeChain,
   transport: http(RPC_URL),
 });
 
 function walletClientFor(account: LocalAccount) {
-  return createWalletClient({ account, chain: sepolia, transport: http(RPC_URL) });
+  return createWalletClient({ account, chain: activeChain, transport: http(RPC_URL) });
 }
 
 /** Round lifecycle enum as declared on-chain (RevenueShareRound.State). */
@@ -83,7 +83,7 @@ export async function invest(account: LocalAccount, roundAddress: `0x${string}`,
     abi: revenueShareRoundAbi,
     functionName: "invest",
     args: [amount],
-    chain: sepolia,
+    chain: activeChain,
   });
 }
 
@@ -93,7 +93,7 @@ export async function claim(account: LocalAccount, roundAddress: `0x${string}`) 
     address: roundAddress,
     abi: revenueShareRoundAbi,
     functionName: "claim",
-    chain: sepolia,
+    chain: activeChain,
   });
 }
 
@@ -108,6 +108,6 @@ export async function distribute(
     abi: revenueShareRoundAbi,
     functionName: "distribute",
     args: [revenue],
-    chain: sepolia,
+    chain: activeChain,
   });
 }

@@ -178,6 +178,31 @@ cp contracts/.env.example contracts/.env
 cd contracts && forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast
 ```
 
+### Demo 100% local (anvil — sin testnet, sin claves)
+
+Loop real invest→distribute→claim sobre una cadena local:
+
+```bash
+pnpm install
+anvil &                                                   # EVM local :8545 (chainId 31337)
+
+# deploy MockUSDT + RoundFactory + ronda demo (usa la dev key #0 de anvil)
+cd contracts && forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+# anota: MockUSDT, RoundFactory y "Demo round" del output
+
+# apuntar web a anvil + esas addresses:
+#   web/.env.local -> NEXT_PUBLIC_RPC_URL=http://127.0.0.1:8545, NEXT_PUBLIC_CHAIN_ID=31337,
+#   NEXT_PUBLIC_USDT_ADDRESS=<MockUSDT>, SPONSOR_PK=<anvil #0>
+#   y seed con la ronda deployada:
+cd ../web
+DEMO_ROUND_ADDRESS=<Demo round> DEMO_CLUB_WALLET=<Deployer> pnpm db:push && \
+DEMO_ROUND_ADDRESS=<Demo round> DEMO_CLUB_WALLET=<Deployer> pnpm db:seed
+pnpm dev                                                  # http://localhost:3000
+```
+
+`lib/chain.ts` resuelve la cadena viem (anvil vs Sepolia) por `NEXT_PUBLIC_CHAIN_ID`, así que el
+mismo código corre local o en testnet sin tocar nada más.
+
 El build corre out-of-the-box sin credenciales: cada integración WDK que necesita clave
 (MoonPay, Indexer archivado, sponsor) degrada limpio si falta el env. Los `TODO(wire)` marcan
 dónde falta la clave real.
