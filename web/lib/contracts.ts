@@ -9,11 +9,14 @@ import { createPublicClient, createWalletClient, http, type LocalAccount } from 
 import { activeChain } from "./chain";
 import revenueShareRoundAbiJson from "../../packages/abi/RevenueShareRound.json";
 import roundFactoryAbiJson from "../../packages/abi/RoundFactory.json";
+import mockUsdtAbiJson from "../../packages/abi/MockUSDT.json";
 
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
+const USDT_ADDRESS = process.env.NEXT_PUBLIC_USDT_ADDRESS as `0x${string}` | undefined;
 
 export const revenueShareRoundAbi = revenueShareRoundAbiJson;
 export const roundFactoryAbi = roundFactoryAbiJson;
+export const mockUsdtAbi = mockUsdtAbiJson;
 
 export const publicClient = createPublicClient({
   chain: activeChain,
@@ -74,6 +77,36 @@ export async function roundState(roundAddress: `0x${string}`) {
     functionName: "state",
   })) as number;
   return ROUND_STATE[state];
+}
+
+/**
+ * Both `invest()` and `distribute()` do a `transferFrom` under the hood, so
+ * the round needs an ERC-20 allowance from the caller first — this pair
+ * covers that (check → approve, only when short).
+ */
+export async function usdtAllowance(owner: `0x${string}`, spender: `0x${string}`) {
+  if (!USDT_ADDRESS) throw new Error("NEXT_PUBLIC_USDT_ADDRESS no configurado");
+  return publicClient.readContract({
+    address: USDT_ADDRESS,
+    abi: mockUsdtAbi,
+    functionName: "allowance",
+    args: [owner, spender],
+  }) as Promise<bigint>;
+}
+
+/** Approves `spender` for `amount` USD₮ and waits for the tx to be mined. */
+export async function approveUsdt(account: LocalAccount, spender: `0x${string}`, amount: bigint) {
+  if (!USDT_ADDRESS) throw new Error("NEXT_PUBLIC_USDT_ADDRESS no configurado");
+  const walletClient = walletClientFor(account);
+  const hash = await walletClient.writeContract({
+    address: USDT_ADDRESS,
+    abi: mockUsdtAbi,
+    functionName: "approve",
+    args: [spender, amount],
+    chain: activeChain,
+  });
+  await publicClient.waitForTransactionReceipt({ hash });
+  return hash;
 }
 
 export async function invest(account: LocalAccount, roundAddress: `0x${string}`, amount: bigint) {

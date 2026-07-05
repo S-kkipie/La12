@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { createWallet, signer } from "@/lib/wdk";
-import { distribute } from "@/lib/contracts";
+import { approveUsdt, distribute, publicClient, usdtAllowance } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
+import { friendlyError } from "@/lib/txError";
 
 type Props = {
   roundAddress: `0x${string}`;
@@ -23,21 +25,33 @@ type Props = {
  */
 export function DistributeForm({ roundAddress }: Props) {
   const [revenue, setRevenue] = useState("1000");
-  const [status, setStatus] = useState<"idle" | "pending" | "done" | "error">("idle");
-  const [message, setMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "pending" | "done">("idle");
 
   async function handleDistribute() {
     setStatus("pending");
-    setMessage(null);
+    const toastId = toast.loading("Preparando…");
     try {
       await createWallet(); // no-ops if a wallet already exists
       const account = await signer();
-      const hash = await distribute(account, roundAddress, parseUsdt(revenue));
+      const value = parseUsdt(revenue);
+
+      // distribute() also does a transferFrom (pulls the revenue in) —
+      // approve first if needed, same as invest().
+      const allowance = await usdtAllowance(account.address, roundAddress);
+      if (allowance < value) {
+        toast.loading("Aprobando USD₮…", { id: toastId });
+        await approveUsdt(account, roundAddress, value);
+      }
+
+      toast.loading("Distribuyendo…", { id: toastId });
+      const hash = await distribute(account, roundAddress, value);
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      toast.success("Reparto enviado", { id: toastId });
       setStatus("done");
-      setMessage(`Recaudación distribuida — tx ${hash.slice(0, 10)}…`);
     } catch (err) {
-      setStatus("error");
-      setMessage(err instanceof Error ? err.message : String(err));
+      setStatus("idle");
+      toast.error(friendlyError(err), { id: toastId });
     }
   }
 
@@ -62,11 +76,6 @@ export function DistributeForm({ roundAddress }: Props) {
       >
         {status === "pending" ? "Distribuyendo…" : "Distribuir recaudación"}
       </button>
-      {message && (
-        <p className={status === "error" ? "text-sm text-red-600" : "text-sm text-emerald-700"}>
-          {message}
-        </p>
-      )}
     </div>
   );
 }

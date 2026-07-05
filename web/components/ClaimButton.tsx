@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { createWallet, signer } from "@/lib/wdk";
-import { claim, pendingReward } from "@/lib/contracts";
+import { claim, pendingReward, publicClient } from "@/lib/contracts";
 import { formatUsdt } from "@/lib/format";
+import { friendlyError } from "@/lib/txError";
 
 type Props = {
   roundAddress: `0x${string}`;
@@ -11,15 +13,14 @@ type Props = {
 
 export function ClaimButton({ roundAddress }: Props) {
   const [pending, setPending] = useState<bigint | null>(null);
-  const [status, setStatus] = useState<"idle" | "claiming" | "error">("idle");
-  const [message, setMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "claiming">("idle");
 
   const refresh = useCallback(async () => {
     try {
       const { address } = await createWallet(); // no-ops if a wallet already exists
       setPending(await pendingReward(roundAddress, address as `0x${string}`));
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : String(err));
+      toast.error(friendlyError(err));
     }
   }, [roundAddress]);
 
@@ -29,16 +30,19 @@ export function ClaimButton({ roundAddress }: Props) {
 
   async function handleClaim() {
     setStatus("claiming");
-    setMessage(null);
+    const toastId = toast.loading("Reclamando…");
     try {
+      // claim() pulls nothing from the caller (only pays out) — no approve needed.
       const account = await signer();
-      await claim(account, roundAddress);
-      setMessage("¡Reclamado! Tu USD₮ ya está en tu billetera.");
+      const hash = await claim(account, roundAddress);
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      toast.success("¡Cobrado!", { id: toastId });
       await refresh();
-      setStatus("idle");
     } catch (err) {
-      setStatus("error");
-      setMessage(err instanceof Error ? err.message : String(err));
+      toast.error(friendlyError(err), { id: toastId });
+    } finally {
+      setStatus("idle");
     }
   }
 
@@ -55,11 +59,6 @@ export function ClaimButton({ roundAddress }: Props) {
       >
         {status === "claiming" ? "Reclamando…" : "Reclamar"}
       </button>
-      {message && (
-        <p className={status === "error" ? "text-sm text-red-600" : "text-sm text-emerald-700"}>
-          {message}
-        </p>
-      )}
     </div>
   );
 }

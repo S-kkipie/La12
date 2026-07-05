@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { createWallet, getUsdtBalance } from "@/lib/wdk";
 import { usdtToFiat } from "@/lib/pricing";
 import { getHistory, type HistoryEntry } from "@/lib/indexer";
 import { formatUsdt, formatFiat } from "@/lib/format";
+import { friendlyError } from "@/lib/txError";
 
 export function WalletCard() {
   const [address, setAddress] = useState<string | null>(null);
@@ -15,7 +17,6 @@ export function WalletCard() {
   const [error, setError] = useState<string | null>(null);
   const [fundingMoonpay, setFundingMoonpay] = useState(false);
   const [fundingFaucet, setFundingFaucet] = useState(false);
-  const [faucetMessage, setFaucetMessage] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
@@ -29,7 +30,7 @@ export function WalletCard() {
       setFiat(await usdtToFiat(bal));
       setHistory(await getHistory(addr as `0x${string}`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(friendlyError(err));
     } finally {
       setLoading(false);
     }
@@ -48,8 +49,14 @@ export function WalletCard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address, amountUsd: 50 }),
       });
-      const { widgetUrl } = await res.json();
-      window.open(widgetUrl, "_blank", "noopener,noreferrer");
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "No se pudo abrir MoonPay.");
+        return;
+      }
+      window.open(data.widgetUrl, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast.error(friendlyError(err));
     } finally {
       setFundingMoonpay(false);
     }
@@ -58,7 +65,7 @@ export function WalletCard() {
   async function fundWithTestFaucet() {
     if (!address) return;
     setFundingFaucet(true);
-    setFaucetMessage(null);
+    const toastId = toast.loading("Consiguiendo USD₮ de prueba…");
     try {
       const res = await fetch("/api/faucet-usdt", {
         method: "POST",
@@ -67,13 +74,13 @@ export function WalletCard() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setFaucetMessage(data.error ?? "No se pudo conseguir USD₮ de prueba.");
+        toast.error(data.error ?? "No se pudo conseguir USD₮ de prueba.", { id: toastId });
         return;
       }
-      setFaucetMessage("¡Listo! Recibiste USD₮ de prueba.");
+      toast.success("USD₮ de prueba recibido", { id: toastId });
       await refresh();
     } catch (err) {
-      setFaucetMessage(err instanceof Error ? err.message : String(err));
+      toast.error(friendlyError(err), { id: toastId });
     } finally {
       setFundingFaucet(false);
     }
@@ -129,7 +136,6 @@ export function WalletCard() {
         >
           {fundingFaucet ? "Consiguiendo…" : "Conseguir 5,000 USD₮ de prueba"}
         </button>
-        {faucetMessage && <p className="text-sm text-zinc-600 dark:text-zinc-400">{faucetMessage}</p>}
       </div>
 
       <div>

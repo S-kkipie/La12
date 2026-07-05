@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { createWallet, signer } from "@/lib/wdk";
-import { invest } from "@/lib/contracts";
+import { approveUsdt, invest, publicClient, usdtAllowance } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
+import { friendlyError } from "@/lib/txError";
 
 type Props = {
   roundAddress: `0x${string}`;
@@ -12,22 +14,34 @@ type Props = {
 
 export function InvestForm({ roundAddress, onInvested }: Props) {
   const [amount, setAmount] = useState("10");
-  const [status, setStatus] = useState<"idle" | "pending" | "done" | "error">("idle");
-  const [message, setMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "pending" | "done">("idle");
 
   async function handleInvest() {
     setStatus("pending");
-    setMessage(null);
+    const toastId = toast.loading("Preparando…");
     try {
       await createWallet(); // no-ops if a wallet already exists
       const account = await signer();
-      const hash = await invest(account, roundAddress, parseUsdt(amount));
+      const value = parseUsdt(amount);
+
+      // invest() does a transferFrom under the hood — approve first if the
+      // round doesn't already have enough allowance from a previous invest.
+      const allowance = await usdtAllowance(account.address, roundAddress);
+      if (allowance < value) {
+        toast.loading("Aprobando USD₮…", { id: toastId });
+        await approveUsdt(account, roundAddress, value);
+      }
+
+      toast.loading("Invirtiendo…", { id: toastId });
+      const hash = await invest(account, roundAddress, value);
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      toast.success("¡Inversión confirmada!", { id: toastId });
       setStatus("done");
-      setMessage(`Listo — tx ${hash.slice(0, 10)}…`);
       onInvested?.(hash);
     } catch (err) {
-      setStatus("error");
-      setMessage(err instanceof Error ? err.message : String(err));
+      setStatus("idle");
+      toast.error(friendlyError(err), { id: toastId });
     }
   }
 
@@ -57,11 +71,6 @@ export function InvestForm({ roundAddress, onInvested }: Props) {
       >
         {status === "pending" ? "Invirtiendo…" : "Invertir"}
       </button>
-      {message && (
-        <p className={status === "error" ? "text-sm text-red-600" : "text-sm text-emerald-700"}>
-          {message}
-        </p>
-      )}
     </div>
   );
 }

@@ -2,7 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { createWallet } from "@/lib/wdk";
+import { friendlyError } from "@/lib/txError";
 
 /**
  * Onboarding CTA (spec §7): one tap creates the fan's self-custody wallet
@@ -12,35 +14,34 @@ import { createWallet } from "@/lib/wdk";
 export function EntrarButton() {
   const router = useRouter();
   const [status, setStatus] = useState<"idle" | "entering">("idle");
-  const [error, setError] = useState<string | null>(null);
 
   async function handleEntrar() {
     setStatus("entering");
-    setError(null);
     try {
       const { address } = await createWallet();
-      await fetch("/api/faucet", {
+      const res = await fetch("/api/faucet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error ?? "No se pudo cubrir el gas — probá invertir igual.");
+      }
       router.push("/wallet");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      toast.error(friendlyError(err));
       setStatus("idle");
     }
   }
 
   return (
-    <div className="flex flex-col items-start gap-2">
-      <button
-        onClick={handleEntrar}
-        disabled={status === "entering"}
-        className="rounded-full bg-emerald-600 px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
-      >
-        {status === "entering" ? "Entrando…" : "Entrar"}
-      </button>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-    </div>
+    <button
+      onClick={handleEntrar}
+      disabled={status === "entering"}
+      className="rounded-full bg-emerald-600 px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+    >
+      {status === "entering" ? "Entrando…" : "Entrar"}
+    </button>
   );
 }
