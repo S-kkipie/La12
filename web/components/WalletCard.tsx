@@ -14,6 +14,8 @@ export function WalletCard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fundingMoonpay, setFundingMoonpay] = useState(false);
+  const [fundingFaucet, setFundingFaucet] = useState(false);
+  const [faucetMessage, setFaucetMessage] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
@@ -50,6 +52,30 @@ export function WalletCard() {
       window.open(widgetUrl, "_blank", "noopener,noreferrer");
     } finally {
       setFundingMoonpay(false);
+    }
+  }
+
+  async function fundWithTestFaucet() {
+    if (!address) return;
+    setFundingFaucet(true);
+    setFaucetMessage(null);
+    try {
+      const res = await fetch("/api/faucet-usdt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFaucetMessage(data.error ?? "No se pudo conseguir USD₮ de prueba.");
+        return;
+      }
+      setFaucetMessage("¡Listo! Recibiste USD₮ de prueba.");
+      await refresh();
+    } catch (err) {
+      setFaucetMessage(err instanceof Error ? err.message : String(err));
+    } finally {
+      setFundingFaucet(false);
     }
   }
 
@@ -91,6 +117,20 @@ export function WalletCard() {
       >
         {fundingMoonpay ? "Abriendo MoonPay…" : "Fondear con MoonPay"}
       </button>
+
+      <div className="flex flex-col gap-1 rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          USD₮ de prueba — solo demo local
+        </span>
+        <button
+          onClick={fundWithTestFaucet}
+          disabled={fundingFaucet}
+          className="self-start rounded-full border border-emerald-600 px-5 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-950"
+        >
+          {fundingFaucet ? "Consiguiendo…" : "Conseguir 5,000 USD₮ de prueba"}
+        </button>
+        {faucetMessage && <p className="text-sm text-zinc-600 dark:text-zinc-400">{faucetMessage}</p>}
+      </div>
 
       <div>
         <div className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">Movimientos</div>
