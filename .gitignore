@@ -33,3 +33,6 @@ contracts/lib/
 
 # Playwright MCP snapshots
 .playwright-mcp/
+
+# SDD execution ledger (scratch)
+.superpowers/
