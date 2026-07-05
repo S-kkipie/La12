@@ -1,6 +1,32 @@
 node_modules/
 .env
 .env.local
+.env.*.local
 dist/
 build/
 .DS_Store
+
+# Next.js
+.next/
+next-env.d.ts
+web/.next/
+
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/lib/
+
+# SQLite
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+
+# misc
+*.log
+.pnpm-store/
+
+# Claude Code agent working memory (not project deliverables)
+.claude/

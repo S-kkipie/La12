@@ -128,20 +128,71 @@ on-chain, transparente, self-custody.
 
 ---
 
-## 7. Decisiones abiertas
+## 7. Decisiones (resueltas en brainstorming — ver `docs/superpowers/specs/`)
 
-- [ ] Confirmar red USDt que expone WDK (¿USDT0 / Tron / TON / Ethereum?) — leer wdk.tether.io.
-- [ ] Club demo: ficticio (predecible) vs real (más impacto).
-- [ ] Pantallas del demo (flujo hincha + flujo club).
-- [ ] Equipo: quién hace smart-contract vs integración WDK vs frontend.
+- [x] Red: **EVM / Ethereum (Sepolia testnet)**, USD₮ ERC-20. WDK wallet-evm; gasless ERC-4337 = stretch.
+- [x] Club demo: **ficticio** — "Deportivo San Martín" (predecible para el juez).
+- [x] Pantallas: landing → club/ronda → wallet (invertir/cobrar) → panel club (distribute). Ver spec §7.
+- [ ] Equipo: quién toma qué tier de integración WDK (MoonPay / Aave / Velora).
 
 ---
 
 ## Stack
-- **Tether WDK** — wallets self-custody + pagos USDt (core)
-- **USDt** — unidad de cuenta de todo (funding, repartos, retiros)
-- Smart contract revenue-share (red por confirmar según WDK)
-- Frontend (por definir)
+- **Tether WDK** — wallets self-custody + pagos USD₮ (core). `@tetherto/wdk` + `@tetherto/wdk-wallet-evm`.
+  Superficie explotada por tiers: wallet+transfer → Indexer → MoonPay → Price Rates → Velora → Aave.
+- **USD₮** — unidad de cuenta de todo (funding, repartos, retiros). 6 decimales.
+- **Smart contract** revenue-share — Solidity + OpenZeppelin (Foundry). Share = ERC-20, reparto
+  claim-based (dividend accumulator). Chain: **EVM / Sepolia**.
+- **Frontend** — Next.js (App Router, TS, Tailwind) + SQLite (Drizzle) + viem. Gas sponsor server-side.
+
+Diseño completo: `docs/superpowers/specs/2026-07-05-la-doce-scaffold-design.md`.
+Notas de la API de WDK: `docs/wdk-reference.md`. Convenciones: `CLAUDE.md`.
+
+## Estructura
+```
+contracts/   Foundry + OZ — RevenueShareRound (ERC-20 share + claim), RoundFactory, MockUSDT + tests
+web/         Next.js — pages, API routes, lib/ (wdk, contracts, indexer, moonpay, pricing, sponsor)
+packages/abi/ ABIs compartidos contract → web
+docs/        spec de diseño + referencia WDK
+```
+
+## Cómo correr
+
+Requisitos: Node 20+, pnpm 10, [Foundry](https://getfoundry.sh) (`curl -L https://foundry.paradigm.xyz | bash && foundryup`).
+
+```bash
+# 1. deps
+pnpm install
+
+# 2. contratos — build + tests (30/30)
+pnpm contracts:build
+pnpm contracts:test
+
+# 3. web — DB local + dev server
+cp web/.env.example web/.env.local     # ajustar si vas a testnet real (RPC key, USDT addr, SPONSOR_PK)
+pnpm --filter web db:seed              # crea SQLite + club/ronda demo
+pnpm web                               # http://localhost:3000
+
+# (opcional) deploy a Sepolia:
+cp contracts/.env.example contracts/.env
+cd contracts && forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast
+```
+
+El build corre out-of-the-box sin credenciales: cada integración WDK que necesita clave
+(MoonPay, Indexer archivado, sponsor) degrada limpio si falta el env. Los `TODO(wire)` marcan
+dónde falta la clave real.
+
+## Por qué WDK + Ethereum
+
+- **WDK** = la capa de dinero de Tether. La Doce ES flujo de dinero (fondeo, reparto, retiro en
+  USD₮), así que el producto encaja natural en el track. Da wallets self-custody sin custodiar
+  fondos (mata el riesgo regulatorio §6), USD₮ nativo, y UX sin fricción de gas. Explotamos su
+  superficie (wallets, Indexer, MoonPay, Price Rates, Velora, Aave) → puntaje alto en el criterio
+  "uso real de la plataforma".
+- **Ethereum/EVM** = el contrato de reparto es el corazón del producto, y Solidity + OpenZeppelin
+  lo hacen más rápido y seguro (patrones auditados) en un hackathon corto. USD₮ ERC-20 con la
+  liquidez más profunda, ejecución barata en L2, y transparencia on-chain = la historia de confianza
+  (lo que a Football Index le faltó).
 
 ## Licencia
-MIT (requisito de la hack).
+MIT — ver [`LICENSE`](./LICENSE). Requisito de la hack (repo público + licencia permisiva).

@@ -91,7 +91,14 @@ on-ramp). viem drives our custom contract, signing with the WDK-derived key. SQL
 Inherits OZ `ERC20` + `ReentrancyGuard` + `Ownable`.
 
 **Round params:** `usdtToken`, `club` (payout wallet), `goal` (USD₮), `sharePriceUsdt`,
-`revenueBps` (retained %, e.g. 800 = 8%), `capMultiple` (e.g. 1.5x scaled), `deadline`.
+`revenueBps` (**% of reported revenue credited TO holders**, e.g. 800 = 8% — the club keeps the
+rest, refunded in the same tx), `capMultiple` (e.g. 1.5x scaled), `deadline`.
+
+> **Note (from review):** `revenueBps` is the fans' cut, not a platform "retained" fee. Matches
+> README ("8% de la taquilla" = 8% of gate to fans). `distribute(revenue)` pulls the full revenue,
+> credits `revenue*revenueBps/10000` to holders (capped at `capMultiple × totalRaised`), refunds
+> the club the remainder + any cap overflow in the same tx. Uses balance-delta accounting so it
+> stays solvent under fee-on-transfer tokens.
 
 **States:** `Funding → Active → Closed`.
 
@@ -112,6 +119,17 @@ stays correct if shares move → enables P2P secondary market later without cont
 
 **Cap:** `distribute` enforces `capMultiple` — stops rewarding once holders recovered
 `cap × invested`; excess returns to `club`.
+
+**Design decision — no refund on unmet goal (from review):** if the deadline passes below `goal`,
+`closeFunding` still sends raised USD₮ to the club and activates the round (no all-or-nothing
+crowdfunding refund). This is intentional — the instrument is revenue-share, not Kickstarter. The
+UI MUST warn fans clearly at invest time ("no reembolso; cobras tu parte de ingresos, no garantía
+de meta"). Constructor validates `revenueBps`, `capMultiple`, `goal`, `sharePriceUsdt` are non-zero
+to prevent bricked rounds. `renounceOwnership` is disabled so a round can't be stranded.
+
+**Security note — factory is permissionless:** anyone can deploy a round emitting `RoundCreated`.
+The web layer MUST NOT trust the raw event feed — `/api/sync` only refreshes rounds already in our
+`rounds` table, and the table carries a `verified` flag (seeded demo round = verified). See §6.
 
 ### `RoundFactory.sol`
 `createRound(params)` deploys a `RevenueShareRound`, emits `RoundCreated(round, club, ...)`
