@@ -30,3 +30,6 @@ contracts/lib/
 
 # Claude Code agent working memory (not project deliverables)
 .claude/
+
+# Playwright MCP snapshots
+.playwright-mcp/
