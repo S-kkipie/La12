@@ -14,3 +14,14 @@ export const authClient = createAuthClient({
 });
 
 export const { signIn, signUp, signOut, useSession } = authClient;
+
+/**
+ * Convenience for components that only need "am I logged in, and as who" to
+ * key their WDK wallet calls (see lib/wdk.ts — every export there takes a
+ * userId). `userId` is undefined while the session is still loading OR when
+ * logged out; check `isPending` to tell those apart.
+ */
+export function useCurrentUserId() {
+  const { data, isPending } = useSession();
+  return { userId: data?.user.id, isPending };
+}

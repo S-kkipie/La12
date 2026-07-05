@@ -4,6 +4,13 @@
 // AES-GCM encrypted with a non-extractable per-device CryptoKey and persisted
 // in IndexedDB (see storage.ts). The server never sees the seed or the key.
 //
+// Keyed per Better Auth userId (not one global seed): this app now has real
+// multi-account sign-in (club + fan), and two accounts created in the same
+// browser must NOT end up sharing a wallet. Every export below takes the
+// caller's userId — resolve it from the session (authClient.useSession() /
+// the signUp/signIn response) at the call site; this module stays
+// auth-agnostic and just treats it as an opaque namespacing key.
+//
 // This module must only be imported from "use client" components — importing
 // it from a Server Component or API route will throw (indexedDB is undefined
 // server-side).
@@ -15,8 +22,8 @@ import { toAccount } from "viem/accounts";
 import type { LocalAccount } from "viem";
 import { idbGet, idbSet } from "./storage";
 
-const SEED_KEY = "wdk:encrypted-seed";
-const DEVICE_KEY_KEY = "wdk:device-key";
+const SEED_KEY_PREFIX = "wdk:encrypted-seed:";
+const DEVICE_KEY_KEY = "wdk:device-key"; // one encryption key per device, shared by all local accounts
 
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 11155111); // Sepolia
@@ -24,6 +31,10 @@ export const USDT_ADDRESS = (process.env.NEXT_PUBLIC_USDT_ADDRESS ??
   "0x0000000000000000000000000000000000dEaD") as `0x${string}`; // TODO(wire): real mock USD₮ address on Sepolia (spec §9)
 
 type EncryptedPayload = { iv: number[]; ciphertext: number[] };
+
+function seedKey(userId: string): string {
+  return `${SEED_KEY_PREFIX}${userId}`;
+}
 
 async function getOrCreateDeviceKey(): Promise<CryptoKey> {
   const existing = await idbGet<CryptoKey>(DEVICE_KEY_KEY);
@@ -59,15 +70,18 @@ async function decryptSeed(payload: EncryptedPayload): Promise<string> {
   return new TextDecoder().decode(plaintext);
 }
 
-let cachedAccount: WalletAccountEvm | null = null;
+// One cached account per userId — never a single shared slot. Logging in as
+// a different account in the same tab must never hand back a stale account.
+const cachedAccounts = new Map<string, WalletAccountEvm>();
 
-async function loadAccount(freshSeed?: string): Promise<WalletAccountEvm> {
-  if (cachedAccount) return cachedAccount;
+async function loadAccount(userId: string, freshSeed?: string): Promise<WalletAccountEvm> {
+  const cached = cachedAccounts.get(userId);
+  if (cached) return cached;
 
   const seed =
     freshSeed ??
     (await (async () => {
-      const payload = await idbGet<EncryptedPayload>(SEED_KEY);
+      const payload = await idbGet<EncryptedPayload>(seedKey(userId));
       if (!payload) {
         throw new Error("No hay wallet todavía — llamá a createWallet() primero.");
       }
@@ -86,40 +100,40 @@ async function loadAccount(freshSeed?: string): Promise<WalletAccountEvm> {
   // registration methods on top of the real WalletAccountEvm. Cast through
   // `unknown` to recover the full, documented surface.
   const account = (await wdk.getAccount("ethereum", 0)) as unknown as WalletAccountEvm;
-  cachedAccount = account;
+  cachedAccounts.set(userId, account);
   return account;
 }
 
-/** Creates (or loads, if one already exists on this device) the fan's wallet. */
-export async function createWallet(): Promise<{ address: string; isNew: boolean }> {
-  const existing = await idbGet<EncryptedPayload>(SEED_KEY);
+/** Creates (or loads, if one already exists on this device) this user's wallet. */
+export async function createWallet(userId: string): Promise<{ address: string; isNew: boolean }> {
+  const existing = await idbGet<EncryptedPayload>(seedKey(userId));
   if (existing) {
-    const account = await loadAccount();
+    const account = await loadAccount(userId);
     return { address: await account.getAddress(), isNew: false };
   }
 
   const seed = WDK.getRandomSeedPhrase();
-  await idbSet(SEED_KEY, await encryptSeed(seed));
-  const account = await loadAccount(seed);
+  await idbSet(seedKey(userId), await encryptSeed(seed));
+  const account = await loadAccount(userId, seed);
   return { address: await account.getAddress(), isNew: true };
 }
 
-/** Returns the fan's account (must call createWallet() at least once before). */
-export async function getAccount(): Promise<WalletAccountEvm> {
-  return loadAccount();
+/** Returns this user's account (must call createWallet(userId) at least once before). */
+export async function getAccount(userId: string): Promise<WalletAccountEvm> {
+  return loadAccount(userId);
 }
 
-export async function hasWallet(): Promise<boolean> {
-  return (await idbGet<EncryptedPayload>(SEED_KEY)) !== undefined;
+export async function hasWallet(userId: string): Promise<boolean> {
+  return (await idbGet<EncryptedPayload>(seedKey(userId))) !== undefined;
 }
 
-export async function getUsdtBalance(): Promise<bigint> {
-  const account = await getAccount();
+export async function getUsdtBalance(userId: string): Promise<bigint> {
+  const account = await getAccount(userId);
   return account.getTokenBalance(USDT_ADDRESS);
 }
 
-export async function transferUsdt(recipient: `0x${string}`, amount: bigint) {
-  const account = await getAccount();
+export async function transferUsdt(userId: string, recipient: `0x${string}`, amount: bigint) {
+  const account = await getAccount(userId);
   return account.transfer({ token: USDT_ADDRESS, recipient, amount });
 }
 
@@ -133,8 +147,8 @@ export async function transferUsdt(recipient: `0x${string}`, amount: bigint) {
  * delegates every signature to the account's own sign/signTransaction/
  * signTypedData methods instead of constructing a viem PrivateKeyAccount.
  */
-export async function signer(): Promise<LocalAccount> {
-  const account = await getAccount();
+export async function signer(userId: string): Promise<LocalAccount> {
+  const account = await getAccount(userId);
   const address = (await account.getAddress()) as `0x${string}`;
 
   return toAccount({

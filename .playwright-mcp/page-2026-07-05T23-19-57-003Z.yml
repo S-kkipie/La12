@@ -1,0 +1,37 @@
+- generic [active] [ref=f2e1]:
+  - navigation [ref=f2e2]:
+    - link "La Doce" [ref=f2e3] [cursor=pointer]:
+      - /url: /
+    - generic [ref=f2e4]:
+      - link "Mi panel" [ref=f2e21] [cursor=pointer]:
+        - /url: /dashboard
+      - button "Salir" [ref=f2e22]
+  - generic [ref=f2e23]:
+    - banner [ref=f2e24]:
+      - generic [ref=f2e25]: Panel del club
+      - heading "Club Playwright" [level=1] [ref=f2e26]
+      - paragraph [ref=f2e27]: "0x78E67e2bdD22b96D7B89A4C462418092604B9B1d"
+    - generic [ref=f2e28]:
+      - heading "Crear nueva ronda" [level=3] [ref=f2e29]
+      - generic [ref=f2e30]:
+        - generic [ref=f2e31]:
+          - text: Meta (USD₮)
+          - spinbutton "Meta (USD₮)" [ref=f2e32]: "40000"
+        - generic [ref=f2e33]:
+          - text: Precio por share (USD₮)
+          - spinbutton "Precio por share (USD₮)" [ref=f2e34]: "1"
+        - generic [ref=f2e35]:
+          - text: Reparto (bps, 800 = 8%)
+          - spinbutton "Reparto (bps, 800 = 8%)" [ref=f2e36]: "800"
+        - generic [ref=f2e37]:
+          - text: Tope (bps, 15000 = 1.5x)
+          - spinbutton "Tope (bps, 15000 = 1.5x)" [ref=f2e38]: "15000"
+        - generic [ref=f2e39]:
+          - text: Plazo (días)
+          - spinbutton "Plazo (días)" [ref=f2e40]: "90"
+      - button "Crear ronda" [ref=f2e41]
+    - generic [ref=f2e42]:
+      - heading "Tus rondas" [level=2] [ref=f2e43]
+      - paragraph [ref=f2e44]: Todavía no creaste una ronda.
+  - region "Notifications alt+T"
+  - alert [ref=f2e19]

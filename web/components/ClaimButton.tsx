@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useCurrentUserId } from "@/lib/auth-client";
 import { createWallet, signer } from "@/lib/wdk";
 import { claim, pendingReward, publicClient } from "@/lib/contracts";
 import { formatUsdt } from "@/lib/format";
@@ -12,28 +13,31 @@ type Props = {
 };
 
 export function ClaimButton({ roundAddress }: Props) {
+  const { userId } = useCurrentUserId();
   const [pending, setPending] = useState<bigint | null>(null);
   const [status, setStatus] = useState<"idle" | "claiming">("idle");
 
   const refresh = useCallback(async () => {
+    if (!userId) return;
     try {
-      const { address } = await createWallet(); // no-ops if a wallet already exists
+      const { address } = await createWallet(userId); // no-ops if a wallet already exists
       setPending(await pendingReward(roundAddress, address as `0x${string}`));
     } catch (err) {
       toast.error(friendlyError(err));
     }
-  }, [roundAddress]);
+  }, [roundAddress, userId]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
   async function handleClaim() {
+    if (!userId) return;
     setStatus("claiming");
     const toastId = toast.loading("Reclamando…");
     try {
       // claim() pulls nothing from the caller (only pays out) — no approve needed.
-      const account = await signer();
+      const account = await signer(userId);
       const hash = await claim(account, roundAddress);
       await publicClient.waitForTransactionReceipt({ hash });
 
@@ -54,7 +58,7 @@ export function ClaimButton({ roundAddress }: Props) {
       <div className="text-xl font-semibold">{formatUsdt(pending ?? 0n)} USD₮</div>
       <button
         onClick={handleClaim}
-        disabled={!hasReward || status === "claiming"}
+        disabled={!userId || !hasReward || status === "claiming"}
         className="mt-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
       >
         {status === "claiming" ? "Reclamando…" : "Reclamar"}

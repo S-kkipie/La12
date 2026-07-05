@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useCurrentUserId } from "@/lib/auth-client";
 import { createWallet, getUsdtBalance } from "@/lib/wdk";
 import { usdtToFiat } from "@/lib/pricing";
 import { getHistory, type HistoryEntry } from "@/lib/indexer";
@@ -9,6 +10,7 @@ import { formatUsdt, formatFiat } from "@/lib/format";
 import { friendlyError } from "@/lib/txError";
 
 export function WalletCard() {
+  const { userId } = useCurrentUserId();
   const [address, setAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<bigint | null>(null);
   const [fiat, setFiat] = useState<number | null>(null);
@@ -18,14 +20,15 @@ export function WalletCard() {
   const [fundingMoonpay, setFundingMoonpay] = useState(false);
   const [fundingFaucet, setFundingFaucet] = useState(false);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
+    if (!userId) return;
     setLoading(true);
     setError(null);
     try {
-      const { address: addr } = await createWallet(); // no-ops if a wallet already exists
+      const { address: addr } = await createWallet(userId); // no-ops if a wallet already exists
       setAddress(addr);
 
-      const bal = await getUsdtBalance();
+      const bal = await getUsdtBalance(userId);
       setBalance(bal);
       setFiat(await usdtToFiat(bal));
       setHistory(await getHistory(addr as `0x${string}`));
@@ -34,11 +37,11 @@ export function WalletCard() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId]);
 
   useEffect(() => {
     void refresh();
-  }, []);
+  }, [refresh]);
 
   async function fundWithMoonpay() {
     if (!address) return;

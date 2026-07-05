@@ -4,12 +4,13 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { ensureWalletLinked } from "@/lib/ensureWallet";
 import { friendlyError } from "@/lib/txError";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => searchParams.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -23,6 +24,12 @@ function LoginForm() {
         toast.error(error.message ?? "Email o contraseña incorrectos", { id: toastId });
         return;
       }
+
+      // Self-heal: makes sure this device has a wallet for this account and
+      // the server has its address, whether this is the device that created
+      // the account or a fresh one recovering after an interrupted signup.
+      toast.loading("Preparando tu billetera…", { id: toastId });
+      await ensureWalletLinked(data.user.id);
 
       toast.success("¡Bienvenido!", { id: toastId });
       const next = searchParams.get("next");

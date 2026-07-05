@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useCurrentUserId } from "@/lib/auth-client";
 import { createWallet, signer } from "@/lib/wdk";
 import { createRoundOnChain } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
@@ -17,6 +18,7 @@ type Props = {
 /** Deploys a real RevenueShareRound via RoundFactory, then registers it. */
 export function CreateRoundForm({ clubName, clubWalletAddress, usdtAddress }: Props) {
   const router = useRouter();
+  const { userId } = useCurrentUserId();
   const [goal, setGoal] = useState("40000");
   const [sharePrice, setSharePrice] = useState("1");
   const [revenueBps, setRevenueBps] = useState("800");
@@ -25,11 +27,12 @@ export function CreateRoundForm({ clubName, clubWalletAddress, usdtAddress }: Pr
   const [submitting, setSubmitting] = useState(false);
 
   async function handleCreate() {
+    if (!userId) return;
     setSubmitting(true);
     const toastId = toast.loading("Desplegando ronda…");
     try {
-      await createWallet(); // no-ops if a wallet already exists
-      const account = await signer();
+      await createWallet(userId); // no-ops if a wallet already exists
+      const account = await signer(userId);
       const deadline = BigInt(Math.floor(Date.now() / 1000) + Number(deadlineDays) * 86_400);
 
       const contractAddress = await createRoundOnChain(account, {
@@ -131,7 +134,7 @@ export function CreateRoundForm({ clubName, clubWalletAddress, usdtAddress }: Pr
       </div>
       <button
         onClick={handleCreate}
-        disabled={submitting}
+        disabled={!userId || submitting}
         className="self-start rounded-full bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
       >
         {submitting ? "Desplegando…" : "Crear ronda"}

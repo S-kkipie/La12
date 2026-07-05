@@ -1,0 +1,25 @@
+- generic [ref=f2e1]:
+  - navigation [ref=f2e2]:
+    - link "La Doce" [ref=f2e3] [cursor=pointer]:
+      - /url: /
+    - generic [ref=f2e4]:
+      - link "Iniciar sesión" [ref=f2e5] [cursor=pointer]:
+        - /url: /login
+      - link "Crear cuenta" [ref=f2e6] [cursor=pointer]:
+        - /url: /signup
+  - generic [ref=f2e7]:
+    - heading "Creá tu cuenta" [level=1] [ref=f2e8]
+    - generic [ref=f2e9]:
+      - button "Soy hincha" [ref=f2e10]
+      - button "Soy un club" [active] [ref=f2e11]
+    - generic [ref=f2e12]:
+      - textbox "Nombre del club" [ref=f2e20]
+      - textbox "Email" [ref=f2e14]
+      - textbox "Contraseña" [ref=f2e15]
+      - button "Crear cuenta" [ref=f2e16]
+    - paragraph [ref=f2e17]:
+      - text: ¿Ya tenés cuenta?
+      - link "Iniciá sesión" [ref=f2e18] [cursor=pointer]:
+        - /url: /login
+  - region "Notifications alt+T"
+  - alert [ref=f2e19]

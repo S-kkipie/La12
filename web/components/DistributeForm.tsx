@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { useCurrentUserId } from "@/lib/auth-client";
 import { createWallet, signer } from "@/lib/wdk";
 import { approveUsdt, distribute, publicClient, usdtAllowance } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
@@ -16,23 +17,23 @@ type Props = {
  * the club's side and triggers the payout that fans then see as a rising
  * `pendingReward` on /wallet.
  *
- * NOTE: on-chain, `distribute()` is restricted to the round's own `club`
- * caller. This form uses whatever wallet the current browser is signed in
- * as — for the demo, that means the "club" role and the "fan" role are
- * played from two different browsers/devices, each with their own WDK
- * wallet. TODO(wire): a real club onboarding flow would pin a club's WDK
- * wallet address to its `clubs.wallet_address` row and enforce it here.
+ * On-chain, `distribute()` is restricted to the round's own `club` caller.
+ * This form is only ever rendered from /dashboard, which resolves "which
+ * club" from the logged-in session (clubs.userId) — never a public page — so
+ * the signer here really is that club's own wallet, not "whoever's browser".
  */
 export function DistributeForm({ roundAddress }: Props) {
+  const { userId } = useCurrentUserId();
   const [revenue, setRevenue] = useState("1000");
   const [status, setStatus] = useState<"idle" | "pending" | "done">("idle");
 
   async function handleDistribute() {
+    if (!userId) return;
     setStatus("pending");
     const toastId = toast.loading("Preparando…");
     try {
-      await createWallet(); // no-ops if a wallet already exists
-      const account = await signer();
+      await createWallet(userId); // no-ops if a wallet already exists
+      const account = await signer(userId);
       const value = parseUsdt(revenue);
 
       // distribute() also does a transferFrom (pulls the revenue in) —
@@ -71,7 +72,7 @@ export function DistributeForm({ roundAddress }: Props) {
       />
       <button
         onClick={handleDistribute}
-        disabled={status === "pending"}
+        disabled={!userId || status === "pending"}
         className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
       >
         {status === "pending" ? "Distribuyendo…" : "Distribuir recaudación"}

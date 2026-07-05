@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { useCurrentUserId } from "@/lib/auth-client";
 import { createWallet, signer } from "@/lib/wdk";
 import { approveUsdt, invest, publicClient, usdtAllowance } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
@@ -13,15 +14,17 @@ type Props = {
 };
 
 export function InvestForm({ roundAddress, onInvested }: Props) {
+  const { userId } = useCurrentUserId();
   const [amount, setAmount] = useState("10");
   const [status, setStatus] = useState<"idle" | "pending" | "done">("idle");
 
   async function handleInvest() {
+    if (!userId) return;
     setStatus("pending");
     const toastId = toast.loading("Preparando…");
     try {
-      await createWallet(); // no-ops if a wallet already exists
-      const account = await signer();
+      await createWallet(userId); // no-ops if a wallet already exists
+      const account = await signer(userId);
       const value = parseUsdt(amount);
 
       // invest() does a transferFrom under the hood — approve first if the
@@ -66,7 +69,7 @@ export function InvestForm({ roundAddress, onInvested }: Props) {
       </p>
       <button
         onClick={handleInvest}
-        disabled={status === "pending"}
+        disabled={!userId || status === "pending"}
         className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
       >
         {status === "pending" ? "Invirtiendo…" : "Invertir"}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import { createWallet } from "@/lib/wdk";
+import { ensureWalletLinked } from "@/lib/ensureWallet";
 import { friendlyError } from "@/lib/txError";
 
 type Role = "club" | "fan";
@@ -22,8 +22,16 @@ export default function SignupPage() {
     setSubmitting(true);
     const toastId = toast.loading("Creando cuenta…");
     try {
-      const { error } = await authClient.signUp.email({ name, email, password, role });
+      const { data, error } = await authClient.signUp.email({ name, email, password, role });
       if (error) {
+        // signUp commits the account (+ signs it in) before we ever get a
+        // chance to create/link a wallet, so a retry after a dropped request
+        // lands here — send them to log in instead of a dead-end error.
+        if (error.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
+          toast.error("Ese email ya tiene cuenta — iniciá sesión", { id: toastId });
+          router.push(`/login?email=${encodeURIComponent(email)}`);
+          return;
+        }
         toast.error(error.message ?? "No se pudo crear la cuenta", { id: toastId });
         return;
       }
@@ -31,18 +39,7 @@ export default function SignupPage() {
       // Self-custody: the seed never leaves the browser — only the public
       // address gets linked to the account.
       toast.loading("Creando tu billetera…", { id: toastId });
-      const { address } = await createWallet();
-
-      const res = await fetch("/api/account/wallet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: address }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        toast.error(data.error ?? "No se pudo vincular la billetera", { id: toastId });
-        return;
-      }
+      await ensureWalletLinked(data.user.id);
 
       toast.success("¡Cuenta creada!", { id: toastId });
       router.push(role === "club" ? "/dashboard" : "/wallet");

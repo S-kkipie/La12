@@ -8,6 +8,7 @@ import { totalRaised, readSafely } from "@/lib/contracts";
 import { RoundProgress } from "@/components/RoundProgress";
 import { DistributeForm } from "@/components/DistributeForm";
 import { CreateRoundForm } from "@/components/CreateRoundForm";
+import { EnsureWallet } from "@/components/EnsureWallet";
 
 /**
  * Club-only home. Every gate here is server-side, not just hidden UI: no
@@ -23,12 +24,11 @@ export default async function DashboardPage() {
 
   const [club] = await db.select().from(clubs).where(eq(clubs.userId, session.user.id));
   if (!club) {
+    // Self-heal an interrupted signup (see lib/ensureWallet.ts): create+link
+    // this account's wallet, then refresh so `club` resolves above.
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-6 py-16">
-        <p className="text-zinc-500">
-          Todavía no vinculamos tu wallet a esta cuenta. Cerrá sesión y volvé a entrar para
-          reintentarlo.
-        </p>
+        <EnsureWallet userId={session.user.id} hasWalletLinked={false} />
       </div>
     );
   }

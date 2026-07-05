@@ -1,0 +1,31 @@
+- generic [active] [ref=f4e1]:
+  - navigation [ref=f4e2]:
+    - link "La Doce" [ref=f4e3] [cursor=pointer]:
+      - /url: /
+    - generic [ref=f4e17]:
+      - link "Mi billetera" [ref=f4e34] [cursor=pointer]:
+        - /url: /wallet
+      - button "Salir" [ref=f4e35]
+  - generic [ref=f4e36]:
+    - heading "Tu billetera" [level=1] [ref=f4e37]
+    - generic [ref=f4e38]:
+      - generic [ref=f4e39]:
+        - generic [ref=f4e40]: Tu dirección
+        - generic [ref=f4e41]: "0xF33f8C042a4F5333C12e2B73aa771E5391592452"
+      - generic [ref=f4e42]:
+        - generic [ref=f4e43]: Balance USD₮
+        - generic [ref=f4e44]: 0.00 USD₮
+        - generic [ref=f4e45]: ≈ USD 0.00
+      - button "Fondear con MoonPay" [ref=f4e46]
+      - generic [ref=f4e47]:
+        - generic [ref=f4e48]: USD₮ de prueba — solo demo local
+        - button "Conseguir 5,000 USD₮ de prueba" [ref=f4e49]
+      - generic [ref=f4e50]:
+        - generic [ref=f4e51]: Movimientos
+        - generic [ref=f4e52]: Aún no hay movimientos.
+    - generic [ref=f4e53]:
+      - generic [ref=f4e54]: Tu recompensa pendiente
+      - generic [ref=f4e55]: 0.00 USD₮
+      - button "Reclamar" [disabled] [ref=f4e56]
+  - region "Notifications alt+T"
+  - alert [ref=f4e16]
