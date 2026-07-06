@@ -1,8 +1,17 @@
 // Seeds one demo club + one demo round so a judge opens the app to zero
 // friction (spec §6). Run with `pnpm db:seed`.
+import { existsSync } from "node:fs";
 import { db } from "@/lib/db";
 import { clubs, rounds } from "@/db/schema";
 import { eq } from "drizzle-orm";
+
+// tsx does NOT auto-load Next.js env files, so DEMO_ROUND_ADDRESS /
+// DEMO_CLUB_WALLET (read below) would be undefined and the round would seed
+// with placeholder addresses pointing at a non-existent contract. Pull in
+// .env.local explicitly (Node >=20.12 built-in). Existing process.env wins.
+if (existsSync(".env.local")) {
+  process.loadEnvFile(".env.local");
+}
 
 async function main() {
   const slug = "deportivo-san-martin";
