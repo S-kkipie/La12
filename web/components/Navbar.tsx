@@ -10,7 +10,7 @@ export function Navbar() {
 
   async function handleLogout() {
     await authClient.signOut();
-    router.push("/login");
+    router.push("/auth/sign-in");
     router.refresh();
   }
 
@@ -25,6 +25,7 @@ export function Navbar() {
             <Link href={session.user.role === "club" ? "/dashboard" : "/wallet"}>
               {session.user.role === "club" ? "Mi panel" : "Mi billetera"}
             </Link>
+            <Link href="/account/settings">Mi cuenta</Link>
             <button
               onClick={handleLogout}
               className="text-zinc-500 transition-colors hover:text-zinc-800 dark:hover:text-zinc-200"
@@ -34,9 +35,9 @@ export function Navbar() {
           </>
         ) : (
           <>
-            <Link href="/login">Iniciar sesión</Link>
+            <Link href="/auth/sign-in">Iniciar sesión</Link>
             <Link
-              href="/signup"
+              href="/auth/sign-up"
               className="rounded-full bg-emerald-600 px-4 py-1.5 font-medium text-white transition-colors hover:bg-emerald-700"
             >
               Crear cuenta
