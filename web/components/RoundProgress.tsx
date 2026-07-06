@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { formatUsdt, formatCapMultiple, formatBps } from "@/lib/format";
 
 type Props = {
@@ -20,34 +22,30 @@ export function RoundProgress({ raised, goal, capMultiple, revenueBps, deadline,
   const pct = goal > 0n ? Math.min(100, Number((raised * 100n) / goal)) : 0;
 
   return (
-    <div className="w-full rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-black">
+    <Card className="glow w-full p-5">
       <div className="mb-2 flex items-center justify-between text-sm">
-        <span className="font-medium text-emerald-700 dark:text-emerald-400">
-          {STATUS_LABEL[status]}
-        </span>
-        <span className="text-zinc-500 dark:text-zinc-400">
+        <Badge className="border-transparent bg-primary/15 text-primary">{STATUS_LABEL[status]}</Badge>
+        <span className="text-muted-foreground">
           Cierra {deadline.toLocaleDateString("es-PE")}
         </span>
       </div>
 
-      <div className="h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-        <div
-          className="h-full rounded-full bg-emerald-600 transition-[width]"
-          style={{ width: `${pct}%` }}
-        />
+      <div className="h-3 w-full overflow-hidden rounded-full bg-secondary">
+        <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${pct}%` }} />
       </div>
 
       <div className="mt-3 flex items-baseline justify-between">
-        <span className="text-lg font-semibold">
-          {formatUsdt(raised)} <span className="text-sm font-normal text-zinc-500">/ {formatUsdt(goal)} USD₮</span>
+        <span className="font-display text-3xl tracking-wide">
+          {formatUsdt(raised)}{" "}
+          <span className="font-sans text-sm font-normal text-muted-foreground">/ {formatUsdt(goal)} USD₮</span>
         </span>
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">{pct}%</span>
+        <span className="text-sm text-muted-foreground">{pct}%</span>
       </div>
 
-      <div className="mt-4 flex gap-4 text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="mt-4 flex gap-4 text-xs text-muted-foreground">
         <span>Reparto a hinchas: {formatBps(revenueBps)} de la recaudación</span>
         <span>Tope: {formatCapMultiple(capMultiple)}</span>
       </div>
-    </div>
+    </Card>
   );
 }
