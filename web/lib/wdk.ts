@@ -264,8 +264,8 @@ async function waitForUserOpTransactionHash(
  *
  * Invariant this whole module exists to uphold: `.address` here is the ONE
  * address that gets linked to the account (ensureWallet.ts), displayed
- * (WalletCard), funded, read from (ClaimButton's pendingReward, allowance
- * checks), and sent from (`execute`) — the EOA in standard mode, the Safe
+ * (BalanceHero), funded, read from (ClaimPositionButton's pendingReward,
+ * allowance checks), and sent from (`execute`) — the EOA in standard mode, the Safe
  * smart-account address in erc4337 mode. Every call site that needs "my
  * wallet address" should go through `getWallet(userId).address`, never
  * `createWallet`'s return value or the standalone `getAccount`/
