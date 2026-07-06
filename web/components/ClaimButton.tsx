@@ -20,8 +20,11 @@ export function ClaimButton({ roundAddress }: Props) {
   const refresh = useCallback(async () => {
     if (!userId) return;
     try {
-      const { address } = await createWallet(userId); // no-ops if a wallet already exists
-      setPending(await pendingReward(roundAddress, address as `0x${string}`));
+      await createWallet(userId); // no-ops if a wallet already exists
+      // getWallet(), not createWallet's own address — in erc4337 mode the
+      // reward accrues to the smart account, not the EOA.
+      const wallet = await getWallet(userId);
+      setPending(await pendingReward(roundAddress, wallet.address));
     } catch (err) {
       toast.error(friendlyError(err));
     }

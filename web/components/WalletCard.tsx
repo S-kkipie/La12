@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useCurrentUserId } from "@/lib/auth-client";
-import { createWallet, getUsdtBalance } from "@/lib/wdk";
+import { createWallet, getWallet } from "@/lib/wdk";
 import { walletMode } from "@/lib/walletMode";
 import { usdtToFiat } from "@/lib/pricing";
 import { getHistory, type HistoryEntry } from "@/lib/indexer";
@@ -27,13 +27,16 @@ export function WalletCard() {
     setLoading(true);
     setError(null);
     try {
-      const { address: addr } = await createWallet(userId); // no-ops if a wallet already exists
-      setAddress(addr);
+      await createWallet(userId); // no-ops if a wallet already exists
+      // getWallet(), not createWallet's own address — in erc4337 mode the
+      // linked/funded/read address is the smart account, not the EOA.
+      const wallet = await getWallet(userId);
+      setAddress(wallet.address);
 
-      const bal = await getUsdtBalance(userId);
+      const bal = await wallet.getUsdtBalance();
       setBalance(bal);
       setFiat(await usdtToFiat(bal));
-      setHistory(await getHistory(addr as `0x${string}`));
+      setHistory(await getHistory(wallet.address));
     } catch (err) {
       setError(friendlyError(err));
     } finally {

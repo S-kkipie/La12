@@ -6,7 +6,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { createWallet } from "./wdk";
+import { createWallet, getWallet } from "./wdk";
 import { walletMode } from "./walletMode";
 
 /**
@@ -28,14 +28,21 @@ import { walletMode } from "./walletMode";
  * logging in fresh on a new device currently mints a brand-new address rather
  * than recovering the original one. A real recovery-phrase UX is out of
  * scope for this fix.
+ *
+ * Links `getWallet(userId).address`, NOT `createWallet`'s own return value —
+ * in erc4337 mode those differ (EOA vs. the Safe smart-account address), and
+ * the smart account is the one that actually holds funds and sends txs. Only
+ * `createWallet` gives us `isNew` (needed for the gas-fund decision below),
+ * so both get called; `getWallet` is the one whose `.address` we act on.
  */
 export async function ensureWalletLinked(userId: string): Promise<string> {
-  const { address, isNew } = await createWallet(userId);
+  const { isNew } = await createWallet(userId);
+  const wallet = await getWallet(userId);
 
   const res = await fetch("/api/account/wallet", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ walletAddress: address }),
+    body: JSON.stringify({ walletAddress: wallet.address }),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -43,10 +50,10 @@ export async function ensureWalletLinked(userId: string): Promise<string> {
   }
 
   if (isNew && walletMode() === "standard") {
-    await fundGasBestEffort(address);
+    await fundGasBestEffort(wallet.address);
   }
 
-  return address;
+  return wallet.address;
 }
 
 async function fundGasBestEffort(address: string): Promise<void> {

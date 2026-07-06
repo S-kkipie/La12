@@ -95,9 +95,34 @@ export async function usdtAllowance(owner: `0x${string}`, spender: `0x${string}`
   }) as Promise<bigint>;
 }
 
-/** Approves `spender` for `amount` USD₮ and waits for the tx to be mined. */
+/**
+ * Approves `spender` for `amount` USD₮ and waits for the tx to be mined.
+ *
+ * Real USD₮ (mainnet) reverts `approve(spender, amount)` when the spender's
+ * current allowance is already nonzero — Tether's contract bakes in the
+ * classic ERC-20 approve race-condition mitigation, which requires resetting
+ * to 0 before setting a new nonzero value. MockUSDT (local anvil/Sepolia)
+ * doesn't enforce this, but resetting first is harmless there too, so this
+ * path runs unconditionally rather than branching on which USD₮ we're
+ * talking to. (Callers still do their own "is an approval even needed"
+ * check via `usdtAllowance` before calling this — see InvestForm/
+ * DistributeForm — so this only runs when a top-up is already known to be
+ * required.)
+ */
 export async function approveUsdt(wallet: WalletHandle, spender: `0x${string}`, amount: bigint) {
   if (!USDT_ADDRESS) throw new Error("NEXT_PUBLIC_USDT_ADDRESS no configurado");
+
+  const current = await usdtAllowance(wallet.address, spender);
+  if (current > 0n) {
+    const resetData = encodeFunctionData({
+      abi: mockUsdtAbi,
+      functionName: "approve",
+      args: [spender, 0n],
+    });
+    const resetHash = await wallet.execute({ to: USDT_ADDRESS, data: resetData });
+    await publicClient.waitForTransactionReceipt({ hash: resetHash });
+  }
+
   const data = encodeFunctionData({ abi: mockUsdtAbi, functionName: "approve", args: [spender, amount] });
   const hash = await wallet.execute({ to: USDT_ADDRESS, data });
   await publicClient.waitForTransactionReceipt({ hash });
@@ -147,6 +172,13 @@ export type CreateRoundParams = {
  * a read-only simulation — no key needed for that part, just the caller's
  * address — then confirmed on-chain by waiting for the real transaction's
  * receipt: the round genuinely exists once this resolves).
+ *
+ * KNOWN LOW (accepted, not fixed): the predicted address from
+ * `simulateContract` could theoretically be stale if another tx from this
+ * same factory lands between the simulation and our real send, changing the
+ * factory's deploy nonce/salt. Demo-safe (single-club-at-a-time usage,
+ * no concurrent round creation in practice) — a real fix would re-derive the
+ * address from the `RoundCreated` event in the actual receipt instead.
  */
 export async function createRoundOnChain(
   wallet: WalletHandle,

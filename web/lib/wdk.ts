@@ -24,7 +24,7 @@
 
 import WDK from "@tetherto/wdk";
 import WalletManagerEvm, { type WalletAccountEvm } from "@tetherto/wdk-wallet-evm";
-import WalletManagerEvmErc4337 from "@tetherto/wdk-wallet-evm-erc-4337";
+import WalletManagerEvmErc4337, { type WalletAccountEvmErc4337 } from "@tetherto/wdk-wallet-evm-erc-4337";
 import { createWalletClient, http, type LocalAccount } from "viem";
 import { toAccount } from "viem/accounts";
 import { activeChain, CHAIN_ID } from "./chain";
@@ -91,9 +91,13 @@ async function loadSeedFor(userId: string): Promise<string> {
   return decryptSeed(payload);
 }
 
-// One cached account per userId — never a single shared slot. Logging in as
-// a different account in the same tab must never hand back a stale account.
+// One cached account per userId per mode — never a single shared slot.
+// Logging in as a different account in the same tab must never hand back a
+// stale account. Two maps (not a union in one) because standard's
+// WalletAccountEvm and erc4337's WalletAccountEvmErc4337 are different
+// classes with different constructors — see getWallet() below.
 const cachedAccounts = new Map<string, WalletAccountEvm>();
+const cachedErc4337Accounts = new Map<string, WalletAccountEvmErc4337>();
 
 async function loadAccount(userId: string, freshSeed?: string): Promise<WalletAccountEvm> {
   const cached = cachedAccounts.get(userId);
@@ -131,7 +135,13 @@ export async function createWallet(userId: string): Promise<{ address: string; i
   return { address: await account.getAddress(), isNew: true };
 }
 
-/** Returns this user's account (must call createWallet(userId) at least once before). */
+/**
+ * Returns this user's standard-mode EOA account (must call createWallet(userId)
+ * at least once before). Always the EOA, regardless of walletMode() — in
+ * erc4337 mode the address that actually holds funds and sends txs is the
+ * smart account, not this one. Use `getWallet(userId)` for a mode-correct
+ * handle; this is a low-level primitive `signer()` builds on.
+ */
 export async function getAccount(userId: string): Promise<WalletAccountEvm> {
   return loadAccount(userId);
 }
@@ -140,11 +150,13 @@ export async function hasWallet(userId: string): Promise<boolean> {
   return (await idbGet<EncryptedPayload>(seedKey(userId))) !== undefined;
 }
 
+/** @deprecated Always reads the standard-mode EOA — use `(await getWallet(userId)).getUsdtBalance()` instead, which is correct in both modes. */
 export async function getUsdtBalance(userId: string): Promise<bigint> {
   const account = await getAccount(userId);
   return account.getTokenBalance(USDT_ADDRESS);
 }
 
+/** @deprecated Always sends from the standard-mode EOA — use `(await getWallet(userId)).transferUsdt(...)` instead, which is correct in both modes. */
 export async function transferUsdt(userId: string, recipient: `0x${string}`, amount: bigint) {
   const account = await getAccount(userId);
   return account.transfer({ token: USDT_ADDRESS, recipient, amount });
@@ -226,6 +238,15 @@ export async function signer(userId: string): Promise<LocalAccount> {
  * viem transaction; erc4337 mode signs+sends a UserOperation (gas pulled
  * from the smart account's own USD₮ by the paymaster). Both return a real,
  * minable tx/UserOp hash that `waitForTransactionReceipt` can wait on.
+ *
+ * Invariant this whole module exists to uphold: `.address` here is the ONE
+ * address that gets linked to the account (ensureWallet.ts), displayed
+ * (WalletCard), funded, read from (ClaimButton's pendingReward, allowance
+ * checks), and sent from (`execute`) — the EOA in standard mode, the Safe
+ * smart-account address in erc4337 mode. Every call site that needs "my
+ * wallet address" should go through `getWallet(userId).address`, never
+ * `createWallet`'s return value or the standalone `getAccount`/
+ * `getUsdtBalance` exports above (those are always the EOA).
  */
 export type WalletHandle = {
   address: `0x${string}`;
@@ -236,11 +257,18 @@ export type WalletHandle = {
 };
 
 export async function getWallet(userId: string): Promise<WalletHandle> {
-  const seed = await loadSeedFor(userId);
-
   if (walletMode() === "erc4337") {
-    const wallet = new WalletManagerEvmErc4337(seed, erc4337Config());
-    const account = await wallet.getAccount(0);
+    // Cached per userId, same as the standard account below — building the
+    // manager + deriving the account is real async work (and the account is
+    // kept alive, not disposed, precisely so it CAN be reused across calls;
+    // disposing would wipe the key material and defeat the cache).
+    let account = cachedErc4337Accounts.get(userId);
+    if (!account) {
+      const seed = await loadSeedFor(userId);
+      const wallet = new WalletManagerEvmErc4337(seed, erc4337Config());
+      account = await wallet.getAccount(0);
+      cachedErc4337Accounts.set(userId, account);
+    }
     const address = (await account.getAddress()) as `0x${string}`;
 
     // VERIFIED against the installed package's types (types/src/
@@ -266,8 +294,9 @@ export async function getWallet(userId: string): Promise<WalletHandle> {
     };
   }
 
-  // standard
-  const account = await loadAccount(userId, seed);
+  // standard — loadAccount already caches per userId (and only decrypts the
+  // seed on a cache miss), so no seed is read here unless actually needed.
+  const account = await loadAccount(userId);
   const address = (await account.getAddress()) as `0x${string}`;
   const local = await signer(userId);
   const walletClient = createWalletClient({ account: local, chain: activeChain, transport: http(RPC_URL) });
