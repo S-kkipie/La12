@@ -1,0 +1,17 @@
+{
+  "name": "projects/6184736633249221964",
+  "projectId": "6184736633249221964",
+  "title": "La Doce — Bold Stadium",
+  "deviceType": "DESKTOP",
+  "designTheme": {
+    "assetId": "9023099819114962889",
+    "displayName": "Bold Stadium",
+    "colorMode": "DARK",
+    "headlineFont": "BEBAS_NEUE",
+    "bodyFont": "GEIST",
+    "roundness": "ROUND_EIGHT",
+    "customColor": "#b6ff3c",
+    "designMd": "Dark-first \"bold stadium\" design language. Background stadium-black #0b0f0d, cards #131a16, primary neon lime #b6ff3c, text-on-lime near-black #08120a, off-white text #e8f0ea, muted #8fa397. Condensed jersey display caps (Bebas Neue vibe) for hero titles, section titles, and big stat numbers (scoreboard feel); Geist for body; mono for addresses/amounts. Radius 0.625rem. Subtle lime glow on hero cards. Spanish (rioplatense) copy. Football/matchday energy. DESKTOP device."
+  },
+  "screens": {}
+}
