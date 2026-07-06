@@ -57,6 +57,14 @@ export async function totalRaised(roundAddress: `0x${string}`) {
   }) as Promise<bigint>;
 }
 
+export async function totalShares(roundAddress: `0x${string}`) {
+  return publicClient.readContract({
+    address: roundAddress,
+    abi: revenueShareRoundAbi,
+    functionName: "totalSupply",
+  }) as Promise<bigint>;
+}
+
 /**
  * Reads a contract value, falling back to `fallback` on error. Server-rendered
  * pages use this for the seeded demo round, whose contractAddress is still a

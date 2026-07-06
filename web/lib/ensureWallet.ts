@@ -19,8 +19,8 @@ import { walletMode } from "./walletMode";
  * gas" — best-effort fund it via the gas sponsor (/api/faucet). This is
  * deliberately best-effort: on a real testnet without SPONSOR_PK configured
  * (or if the relayer is dry) it fails silently past a soft toast, since the
- * "Conseguir ETH de gas" button on /wallet (WalletCard) is the fallback
- * either way. Skipped entirely in `erc4337` mode — that wallet pays gas in
+ * "Get gas ETH" button in /wallet's Add-funds dialog (AddFundsDialog) is the
+ * fallback either way. Skipped entirely in `erc4337` mode — that wallet pays gas in
  * USD₮ via the paymaster and never needs ETH (see walletMode.ts).
  *
  * TODO(wire): this only recovers the wallet on the SAME browser/device that
