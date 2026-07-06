@@ -11,6 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+function safeParseUsdt(input: string): bigint | null {
+  if (input.trim() === "") return null;
+  try {
+    return parseUsdt(input);
+  } catch {
+    return null;
+  }
+}
+
 export function SendDialog({
   open,
   onOpenChange,
@@ -30,9 +39,11 @@ export function SendDialog({
   const [sending, setSending] = useState(false);
 
   const validAddress = isAddress(recipient);
-  const value = amount.trim() === "" ? 0n : parseUsdt(amount);
-  const overBalance = value > balance;
-  const canReview = validAddress && value > 0n && !overBalance;
+  const parsed = safeParseUsdt(amount);
+  const value = parsed ?? 0n;
+  const validAmount = parsed !== null && parsed > 0n;
+  const overBalance = validAmount && value > balance;
+  const canReview = validAddress && validAmount && !overBalance;
 
   function reset() {
     setStep("form");
@@ -91,6 +102,9 @@ export function SendDialog({
               <Input id="send-amount" type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
               <span className="text-xs text-muted-foreground">Balance: {formatUsdt(balance)} USD₮</span>
               {overBalance && <span className="text-xs text-destructive">More than your balance.</span>}
+              {!overBalance && amount !== "" && !validAmount && (
+                <span className="text-xs text-destructive">Not a valid amount.</span>
+              )}
             </div>
             <DialogFooter>
               <Button disabled={!canReview} onClick={() => setStep("review")}>
