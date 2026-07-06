@@ -45,13 +45,13 @@ export function Navbar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem render={<Link href={home} />}>
-                {session.user.role === "club" ? "Mi panel" : "Mi billetera"}
+                {session.user.role === "club" ? "Dashboard" : "My wallet"}
               </DropdownMenuItem>
               <DropdownMenuItem render={<Link href="/account/settings" />}>
-                Mi cuenta
+                Account
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>Salir</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>Sign out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
@@ -60,10 +60,10 @@ export function Navbar() {
               href="/auth/sign-in"
               className={buttonVariants({ variant: "ghost", size: "sm" })}
             >
-              Iniciar sesión
+              Sign in
             </Link>
             <Link href="/auth/sign-up" className={buttonVariants({ size: "sm" })}>
-              Crear cuenta
+              Sign up
             </Link>
           </>
         )}
