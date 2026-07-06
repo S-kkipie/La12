@@ -57,6 +57,14 @@ export async function totalRaised(roundAddress: `0x${string}`) {
   }) as Promise<bigint>;
 }
 
+export async function totalDistributedToHolders(roundAddress: `0x${string}`) {
+  return publicClient.readContract({
+    address: roundAddress,
+    abi: revenueShareRoundAbi,
+    functionName: "totalDistributedToHolders",
+  }) as Promise<bigint>;
+}
+
 export async function totalShares(roundAddress: `0x${string}`) {
   return publicClient.readContract({
     address: roundAddress,
