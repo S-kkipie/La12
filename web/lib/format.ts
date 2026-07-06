@@ -1,5 +1,7 @@
 // Small display helpers shared by pages/components. USD₮ + the share token
 // both use 6 decimals (spec §4).
+import { activeChain } from "./chain";
+
 const USDT_DECIMALS = 6;
 
 export function formatUsdt(baseUnits: bigint | number | string): string {
@@ -26,4 +28,25 @@ export function formatCapMultiple(bps: number): string {
 
 export function formatBps(bps: number): string {
   return `${(bps / 100).toFixed(1)}%`;
+}
+
+export function shortenAddress(addr: string, chars = 4): string {
+  if (!addr || addr.length <= 2 + chars * 2) return addr;
+  return `${addr.slice(0, 2 + chars)}…${addr.slice(-chars)}`;
+}
+
+export function formatRelativeTime(unixSeconds: number, nowMs: number = Date.now()): string {
+  const diffSec = Math.max(0, Math.floor(nowMs / 1000) - unixSeconds);
+  if (diffSec < 60) return "just now";
+  const mins = Math.floor(diffSec / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+export function explorerTxUrl(hash: string): string {
+  const base = activeChain.blockExplorers?.default?.url;
+  return base ? `${base}/tx/${hash}` : "#";
 }
