@@ -122,7 +122,7 @@ export async function usdtAllowance(owner: `0x${string}`, spender: `0x${string}`
  * path runs unconditionally rather than branching on which USD₮ we're
  * talking to. (Callers still do their own "is an approval even needed"
  * check via `usdtAllowance` before calling this — see InvestForm/
- * DistributeForm — so this only runs when a top-up is already known to be
+ * DistributeDialog — so this only runs when a top-up is already known to be
  * required.)
  */
 export async function approveUsdt(wallet: WalletHandle, spender: `0x${string}`, amount: bigint) {
