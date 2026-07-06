@@ -219,5 +219,23 @@ dónde falta la clave real.
   liquidez más profunda, ejecución barata en L2, y transparencia on-chain = la historia de confianza
   (lo que a Football Index le faltó).
 
+## Gas: cómo el hincha nunca toca ETH
+
+El wallet corre en **dos modos** (`NEXT_PUBLIC_WALLET_MODE`), con el mismo código de app:
+
+| Modo | Cuándo | Cómo se paga el gas |
+|---|---|---|
+| `standard` (default) | demo local (anvil) | wallet EOA; un relayer pre-fondea un poco de ETH (`/api/faucet`). Atajo **solo para demo** — en mainnet no se puede regalar ETH. |
+| `erc4337` | testnet / **mainnet** | Safe **smart account** vía `@tetherto/wdk-wallet-evm-erc-4337`; el gas lo paga el **paymaster descontando USD₮**. El hincha **nunca necesita ETH**. |
+
+En `erc4337` las operaciones son UserOperations (`account.sendTransaction({to,data})`), el paymaster
+(`paymasterToken = USD₮`) cobra el gas en USD₮, y la dirección que se linkea/muestra/fondea/cobra es
+la **smart account** — un solo address en todo el flujo. El swap entre modos es solo config
+(bundler/paymaster URLs); la lógica de contratos e invest/claim/distribute es idéntica.
+
+> Estado: modos implementados y probados en `standard` (loop completo en anvil). La prueba gasless
+> real en Sepolia (contratos + bundler/paymaster Candide) es el último paso — ver
+> `docs/superpowers/plans/2026-07-05-erc4337-gasless-mainnet.md` (tasks 5-6).
+
 ## Licencia
 MIT — ver [`LICENSE`](./LICENSE). Requisito de la hack (repo público + licencia permisiva).

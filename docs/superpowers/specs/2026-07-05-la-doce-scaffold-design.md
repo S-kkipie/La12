@@ -34,7 +34,7 @@ bridge is roadmap-only. Secondary P2P market is enabled by the ERC-20 share but 
 | Smart contract | **Foundry + OpenZeppelin** | Solidity-native, audited primitives, fast tests/fuzz |
 | Distribution | **Claim-based, share = ERC-20** (dividend-token / MasterChef `accRewardPerShare`) | O(1) payout, gas-safe with N holders, share is tradeable → future P2P |
 | Wallet / payments | **WDK** client-side, USD₮ on **EVM (Sepolia testnet)** | Self-custody, USD₮ native, ERC-4337 available |
-| Gas model | **Sponsor via pre-fund (approach B)** | Fan never needs ETH; server pays gas only, never touches the fan's key. ERC-4337 gasless = stretch |
+| Gas model | **Dual-mode** — pre-fund (approach B, local) + ERC-4337 (approach A, mainnet) | `NEXT_PUBLIC_WALLET_MODE`: `standard` = EOA + ETH pre-fund (local demo); `erc4337` = smart account, gas paid in USD₮ via paymaster (mainnet). Both implemented; see plan `2026-07-05-erc4337-gasless-mainnet.md`. |
 
 Monorepo: **pnpm workspace**.
 
