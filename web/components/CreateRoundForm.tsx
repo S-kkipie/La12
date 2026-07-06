@@ -17,10 +17,11 @@ type Props = {
   clubName: string;
   clubWalletAddress: `0x${string}`;
   usdtAddress: `0x${string}`;
+  onCreated?: () => void;
 };
 
 /** Deploys a real RevenueShareRound via RoundFactory, then registers it. */
-export function CreateRoundForm({ clubName, clubWalletAddress, usdtAddress }: Props) {
+export function CreateRoundForm({ clubName, clubWalletAddress, usdtAddress, onCreated }: Props) {
   const router = useRouter();
   const { userId } = useCurrentUserId();
   const [goal, setGoal] = useState("40000");
@@ -71,6 +72,7 @@ export function CreateRoundForm({ clubName, clubWalletAddress, usdtAddress }: Pr
       }
 
       toast.success("Round created!", { id: toastId });
+      onCreated?.();
       router.refresh();
     } catch (err) {
       toast.error(friendlyError(err), { id: toastId });
