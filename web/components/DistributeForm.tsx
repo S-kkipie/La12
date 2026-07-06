@@ -7,6 +7,10 @@ import { createWallet, getWallet } from "@/lib/wdk";
 import { approveUsdt, distribute, usdtAllowance } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
 import { friendlyError } from "@/lib/txError";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Props = {
   roundAddress: `0x${string}`;
@@ -56,26 +60,19 @@ export function DistributeForm({ roundAddress }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-black">
-      <label className="text-sm font-medium" htmlFor="revenue-amount">
-        Recaudación a distribuir (USD₮)
-      </label>
-      <input
+    <Card className="flex flex-col gap-3 p-5">
+      <Label htmlFor="revenue-amount">Recaudación a distribuir (USD₮)</Label>
+      <Input
         id="revenue-amount"
         type="number"
         min="1"
         step="1"
         value={revenue}
         onChange={(e) => setRevenue(e.target.value)}
-        className="rounded-lg border border-black/10 bg-transparent px-3 py-2 dark:border-white/10"
       />
-      <button
-        onClick={handleDistribute}
-        disabled={!userId || status === "pending"}
-        className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
-      >
+      <Button onClick={handleDistribute} disabled={!userId || status === "pending"}>
         {status === "pending" ? "Distribuyendo…" : "Distribuir recaudación"}
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 }

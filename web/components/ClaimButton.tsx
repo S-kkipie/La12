@@ -7,6 +7,8 @@ import { createWallet, getWallet } from "@/lib/wdk";
 import { claim, pendingReward } from "@/lib/contracts";
 import { formatUsdt } from "@/lib/format";
 import { friendlyError } from "@/lib/txError";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   roundAddress: `0x${string}`;
@@ -55,16 +57,16 @@ export function ClaimButton({ roundAddress }: Props) {
   const hasReward = (pending ?? 0n) > 0n;
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-black">
-      <div className="text-xs text-zinc-500 dark:text-zinc-400">Tu recompensa pendiente</div>
-      <div className="text-xl font-semibold">{formatUsdt(pending ?? 0n)} USD₮</div>
-      <button
+    <Card className="flex flex-col gap-2 p-5">
+      <div className="text-xs text-muted-foreground">Tu recompensa pendiente</div>
+      <div className="font-display text-3xl tracking-wide text-primary">{formatUsdt(pending ?? 0n)} USD₮</div>
+      <Button
+        className="mt-2 self-start"
         onClick={handleClaim}
         disabled={!userId || !hasReward || status === "claiming"}
-        className="mt-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
       >
         {status === "claiming" ? "Reclamando…" : "Reclamar"}
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 }

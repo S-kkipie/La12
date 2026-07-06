@@ -7,6 +7,10 @@ import { createWallet, getWallet } from "@/lib/wdk";
 import { approveUsdt, invest, usdtAllowance } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
 import { friendlyError } from "@/lib/txError";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Props = {
   roundAddress: `0x${string}`;
@@ -48,31 +52,24 @@ export function InvestForm({ roundAddress, onInvested }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-black">
-      <label className="text-sm font-medium" htmlFor="invest-amount">
-        Monto a invertir (USD₮)
-      </label>
-      <input
+    <Card className="flex flex-col gap-3 p-5">
+      <Label htmlFor="invest-amount">Monto a invertir (USD₮)</Label>
+      <Input
         id="invest-amount"
         type="number"
         min="1"
         step="1"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className="rounded-lg border border-black/10 bg-transparent px-3 py-2 dark:border-white/10"
       />
-      <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm font-medium text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+      <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm font-medium text-amber-200">
         ⚠️ Sin reembolso. Comprás un derecho a % de ingresos del club, no una
         garantía. Si la ronda no llega a la meta, tu USD₮ igual va al club y
         cobrás según los ingresos reales. Tus llaves son tuyas.
       </p>
-      <button
-        onClick={handleInvest}
-        disabled={!userId || status === "pending"}
-        className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
-      >
+      <Button onClick={handleInvest} disabled={!userId || status === "pending"}>
         {status === "pending" ? "Invirtiendo…" : "Invertir"}
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 }

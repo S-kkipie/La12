@@ -8,6 +8,10 @@ import { createWallet, getWallet } from "@/lib/wdk";
 import { createRoundOnChain } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
 import { friendlyError } from "@/lib/txError";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Props = {
   clubName: string;
@@ -76,69 +80,33 @@ export function CreateRoundForm({ clubName, clubWalletAddress, usdtAddress }: Pr
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-black">
-      <h3 className="font-semibold">Crear nueva ronda</h3>
+    <Card className="flex flex-col gap-3 p-5">
+      <h3 className="font-display text-2xl tracking-wide">Crear nueva ronda</h3>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <label className="flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Meta (USD₮)
-          <input
-            type="number"
-            min="1"
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-            className="rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:border-white/10 dark:text-zinc-100"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Precio por share (USD₮)
-          <input
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={sharePrice}
-            onChange={(e) => setSharePrice(e.target.value)}
-            className="rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:border-white/10 dark:text-zinc-100"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Reparto (bps, 800 = 8%)
-          <input
-            type="number"
-            min="1"
-            max="10000"
-            value={revenueBps}
-            onChange={(e) => setRevenueBps(e.target.value)}
-            className="rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:border-white/10 dark:text-zinc-100"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Tope (bps, 15000 = 1.5x)
-          <input
-            type="number"
-            min="1"
-            value={capMultiple}
-            onChange={(e) => setCapMultiple(e.target.value)}
-            className="rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:border-white/10 dark:text-zinc-100"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Plazo (días)
-          <input
-            type="number"
-            min="1"
-            value={deadlineDays}
-            onChange={(e) => setDeadlineDays(e.target.value)}
-            className="rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:border-white/10 dark:text-zinc-100"
-          />
-        </label>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground" htmlFor="cr-goal">Meta (USD₮)</Label>
+          <Input id="cr-goal" type="number" min="1" value={goal} onChange={(e) => setGoal(e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground" htmlFor="cr-price">Precio por share (USD₮)</Label>
+          <Input id="cr-price" type="number" min="0.01" step="0.01" value={sharePrice} onChange={(e) => setSharePrice(e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground" htmlFor="cr-bps">Reparto (bps, 800 = 8%)</Label>
+          <Input id="cr-bps" type="number" min="1" max="10000" value={revenueBps} onChange={(e) => setRevenueBps(e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground" htmlFor="cr-cap">Tope (bps, 15000 = 1.5x)</Label>
+          <Input id="cr-cap" type="number" min="1" value={capMultiple} onChange={(e) => setCapMultiple(e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground" htmlFor="cr-days">Plazo (días)</Label>
+          <Input id="cr-days" type="number" min="1" value={deadlineDays} onChange={(e) => setDeadlineDays(e.target.value)} />
+        </div>
       </div>
-      <button
-        onClick={handleCreate}
-        disabled={!userId || submitting}
-        className="self-start rounded-full bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
-      >
+      <Button className="self-start" onClick={handleCreate} disabled={!userId || submitting}>
         {submitting ? "Desplegando…" : "Crear ronda"}
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 }
