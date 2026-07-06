@@ -1,21 +1,21 @@
 // Maps a thrown error (viem walletClient/publicClient calls, or a plain WDK
-// Error) to a short, Spanish, user-facing message. Never surfaces the raw
+// Error) to a short, English, user-facing message. Never surfaces the raw
 // hex/ABI dump viem errors otherwise print — those are great for our logs,
 // terrible for a fan staring at a toast.
 import { BaseError } from "viem";
 
 /** Known on-chain revert reasons for RevenueShareRound (see contracts/src). */
 const KNOWN_REVERTS: Array<[needle: string, message: string]> = [
-  ["insufficientallowance", "Falta aprobar USD₮ (reintentá, ahora aprueba solo)"],
-  ["insufficientbalance", "USD₮ insuficiente — usá 'Conseguir USD₮ de prueba'"],
-  ["exceeds balance", "USD₮ insuficiente — usá 'Conseguir USD₮ de prueba'"],
-  ["user rejected", "Cancelaste la transacción"],
-  [" 4001", "Cancelaste la transacción"],
-  ["insufficient funds", "Sin ETH para gas — tocá 'Conseguir ETH de gas' en tu billetera"],
-  ["not funding", "La ronda ya cerró el financiamiento"],
-  ["not active", "La ronda todavía no está activa"],
-  ["nothing to claim", "No tenés recompensa pendiente para reclamar"],
-  ["goal/deadline not met", "La ronda no llegó a la meta ni venció el plazo"],
+  ["insufficientallowance", "USD₮ approval needed (retry, it'll approve first this time)"],
+  ["insufficientbalance", "Not enough USD₮ — use 'Get test USD₮'"],
+  ["exceeds balance", "Not enough USD₮ — use 'Get test USD₮'"],
+  ["user rejected", "You cancelled the transaction"],
+  [" 4001", "You cancelled the transaction"],
+  ["insufficient funds", "No ETH for gas — tap 'Get gas ETH' in your wallet"],
+  ["not funding", "The round has already closed funding"],
+  ["not active", "The round isn't active yet"],
+  ["nothing to claim", "You have no pending reward to claim"],
+  ["goal/deadline not met", "The round didn't reach its goal or its deadline"],
 ];
 
 export function friendlyError(err: unknown): string {
@@ -30,7 +30,7 @@ export function friendlyError(err: unknown): string {
       if (haystack.includes(needle)) return message;
     }
 
-    return err.shortMessage || "Error en la transacción";
+    return err.shortMessage || "Transaction error";
   }
 
   if (err instanceof Error) {
@@ -41,5 +41,5 @@ export function friendlyError(err: unknown): string {
     return err.message;
   }
 
-  return "Error en la transacción";
+  return "Transaction error";
 }

@@ -38,7 +38,7 @@ export function EnsureWallet({ userId, hasWalletLinked }: Props) {
     return (
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <Skeleton className="size-4 rounded-full" />
-        Configurando tu billetera…
+        Setting up your wallet…
       </div>
     );
   }

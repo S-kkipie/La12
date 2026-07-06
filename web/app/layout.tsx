@@ -14,9 +14,9 @@ const bebasNeue = Bebas_Neue({
 });
 
 export const metadata: Metadata = {
-  title: "La Doce — tokenización de clubes de fútbol",
+  title: "La Doce — tokenization for football clubs",
   description:
-    "Financiá a tu club en USD₮ y cobrá tu parte de la recaudación. Wallets self-custody con WDK.",
+    "Fund your club in USD₮ and collect your share of the revenue. Self-custody wallets with WDK.",
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="es"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

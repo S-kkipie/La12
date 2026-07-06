@@ -35,7 +35,7 @@ export default function SignUpPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    const toastId = toast.loading("Creando cuenta…");
+    const toastId = toast.loading("Creating account…");
     try {
       const { data, error } = await authClient.signUp.email({
         name,
@@ -48,11 +48,11 @@ export default function SignUpPage() {
         // wallet creation, so a retry after a dropped request lands here —
         // send them to log in instead of a dead-end error.
         if (error.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
-          toast.error("Ese email ya tiene cuenta — iniciá sesión", { id: toastId });
+          toast.error("That email already has an account — sign in", { id: toastId });
           router.push(`/auth/sign-in?email=${encodeURIComponent(email)}`);
           return;
         }
-        toast.error(error.message ?? "No se pudo crear la cuenta", { id: toastId });
+        toast.error(error.message ?? "Couldn't create the account", { id: toastId });
         return;
       }
 
@@ -61,7 +61,7 @@ export default function SignUpPage() {
       // the wallet (self-custody seed generated in-browser). `data` is used so
       // the success path stays tied to a real account.
       void data;
-      toast.success("¡Cuenta creada!", { id: toastId });
+      toast.success("Account created!", { id: toastId });
       router.push("/post-auth");
     } catch (err) {
       toast.error(friendlyError(err), { id: toastId });
@@ -74,18 +74,18 @@ export default function SignUpPage() {
     <main className="mx-auto flex w-full max-w-md flex-1 items-center justify-center p-6">
       <Card className="glow w-full">
         <CardHeader>
-          <CardTitle className="text-xl">Creá tu cuenta</CardTitle>
+          <CardTitle className="text-xl">Create your account</CardTitle>
           <CardDescription>
-            Sumate a La Doce como hincha o registrá tu club.
+            Join La Doce as a fan or register your club.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <Label>Tipo de cuenta</Label>
+              <Label>Account type</Label>
               <div
                 role="radiogroup"
-                aria-label="Tipo de cuenta"
+                aria-label="Account type"
                 className="flex gap-1 rounded-lg border border-input p-1"
               >
                 {(["fan", "club"] as const).map((r) => (
@@ -101,7 +101,7 @@ export default function SignUpPage() {
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {r === "fan" ? "Soy hincha" : "Soy un club"}
+                    {r === "fan" ? "I'm a fan" : "I'm a club"}
                   </button>
                 ))}
               </div>
@@ -109,13 +109,13 @@ export default function SignUpPage() {
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="name">
-                {role === "club" ? "Nombre del club" : "Tu nombre"}
+                {role === "club" ? "Club name" : "Your name"}
               </Label>
               <Input
                 id="name"
                 type="text"
                 required
-                placeholder={role === "club" ? "Nombre del club" : "Tu nombre"}
+                placeholder={role === "club" ? "Club name" : "Your name"}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -127,37 +127,37 @@ export default function SignUpPage() {
                 id="email"
                 type="email"
                 required
-                placeholder="vos@ejemplo.com"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
                 required
                 minLength={8}
-                placeholder="Contraseña"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
             <Button type="submit" disabled={submitting} className="w-full">
-              {submitting ? "Creando…" : "Crear cuenta"}
+              {submitting ? "Creating…" : "Create account"}
             </Button>
           </form>
 
           <p className="mt-4 text-sm text-muted-foreground">
-            ¿Ya tenés cuenta?{" "}
+            Already have an account?{" "}
             <Link
               href="/auth/sign-in"
               className="font-medium text-primary hover:underline"
             >
-              Iniciá sesión
+              Sign in
             </Link>
           </p>
         </CardContent>

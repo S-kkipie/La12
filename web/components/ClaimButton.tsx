@@ -39,13 +39,13 @@ export function ClaimButton({ roundAddress }: Props) {
   async function handleClaim() {
     if (!userId) return;
     setStatus("claiming");
-    const toastId = toast.loading("Reclamando…");
+    const toastId = toast.loading("Claiming…");
     try {
       // claim() pulls nothing from the caller (only pays out) — no approve needed.
       const wallet = await getWallet(userId);
       await claim(wallet, roundAddress);
 
-      toast.success("¡Cobrado!", { id: toastId });
+      toast.success("Claimed!", { id: toastId });
       await refresh();
     } catch (err) {
       toast.error(friendlyError(err), { id: toastId });
@@ -58,14 +58,14 @@ export function ClaimButton({ roundAddress }: Props) {
 
   return (
     <Card className="flex flex-col gap-2 p-5">
-      <div className="text-xs text-muted-foreground">Tu recompensa pendiente</div>
+      <div className="text-xs text-muted-foreground">Your pending reward</div>
       <div className="font-display text-3xl tracking-wide text-primary">{formatUsdt(pending ?? 0n)} USD₮</div>
       <Button
         className="mt-2 self-start"
         onClick={handleClaim}
         disabled={!userId || !hasReward || status === "claiming"}
       >
-        {status === "claiming" ? "Reclamando…" : "Reclamar"}
+        {status === "claiming" ? "Claiming…" : "Claim"}
       </Button>
     </Card>
   );

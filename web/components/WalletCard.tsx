@@ -62,7 +62,7 @@ export function WalletCard() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "No se pudo abrir MoonPay.");
+        toast.error(data.error ?? "Could not open MoonPay.");
         return;
       }
       window.open(data.widgetUrl, "_blank", "noopener,noreferrer");
@@ -76,7 +76,7 @@ export function WalletCard() {
   async function fundWithTestFaucet() {
     if (!address) return;
     setFundingFaucet(true);
-    const toastId = toast.loading("Consiguiendo USD₮ de prueba…");
+    const toastId = toast.loading("Getting test USD₮…");
     try {
       const res = await fetch("/api/faucet-usdt", {
         method: "POST",
@@ -85,10 +85,10 @@ export function WalletCard() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "No se pudo conseguir USD₮ de prueba.", { id: toastId });
+        toast.error(data.error ?? "Could not get test USD₮.", { id: toastId });
         return;
       }
-      toast.success("USD₮ de prueba recibido", { id: toastId });
+      toast.success("Test USD₮ received", { id: toastId });
       await refresh();
     } catch (err) {
       toast.error(friendlyError(err), { id: toastId });
@@ -100,7 +100,7 @@ export function WalletCard() {
   async function fundWithGasFaucet() {
     if (!address) return;
     setFundingGas(true);
-    const toastId = toast.loading("Consiguiendo ETH de gas…");
+    const toastId = toast.loading("Getting gas ETH…");
     try {
       const res = await fetch("/api/faucet", {
         method: "POST",
@@ -109,10 +109,10 @@ export function WalletCard() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "No se pudo conseguir ETH de gas.", { id: toastId });
+        toast.error(data.error ?? "Could not get gas ETH.", { id: toastId });
         return;
       }
-      toast.success("ETH de gas recibido", { id: toastId });
+      toast.success("Gas ETH received", { id: toastId });
     } catch (err) {
       toast.error(friendlyError(err), { id: toastId });
     } finally {
@@ -133,7 +133,7 @@ export function WalletCard() {
   if (error) {
     return (
       <Card className="border-destructive/40 bg-destructive/10 p-5 text-destructive">
-        No se pudo cargar tu billetera: {error}
+        Could not load your wallet: {error}
       </Card>
     );
   }
@@ -141,12 +141,12 @@ export function WalletCard() {
   return (
     <Card className="glow flex flex-col gap-4 p-5">
       <div>
-        <div className="text-xs text-muted-foreground">Tu dirección</div>
+        <div className="text-xs text-muted-foreground">Your address</div>
         <div className="truncate font-mono text-sm">{address}</div>
       </div>
 
       <div>
-        <div className="text-xs text-muted-foreground">Balance USD₮</div>
+        <div className="text-xs text-muted-foreground">USD₮ balance</div>
         <div className="font-display text-5xl tracking-wide text-primary">
           {formatUsdt(balance ?? 0n)} <span className="font-sans text-2xl text-foreground">USD₮</span>
         </div>
@@ -156,36 +156,36 @@ export function WalletCard() {
       </div>
 
       <Button onClick={fundWithMoonpay} disabled={fundingMoonpay}>
-        {fundingMoonpay ? "Abriendo MoonPay…" : "Fondear con MoonPay"}
+        {fundingMoonpay ? "Opening MoonPay…" : "Fund with MoonPay"}
       </Button>
 
       {walletMode() === "standard" ? (
         <div className="flex flex-col gap-2 rounded-lg border border-dashed border-border p-3">
-          <span className="text-xs text-muted-foreground">Fondos de prueba — solo demo local</span>
+          <span className="text-xs text-muted-foreground">Test funds — local demo only</span>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={fundWithTestFaucet} disabled={fundingFaucet}>
-              {fundingFaucet ? "Consiguiendo…" : "Conseguir 5,000 USD₮ de prueba"}
+              {fundingFaucet ? "Getting…" : "Get 5,000 test USD₮"}
             </Button>
             <Button variant="outline" size="sm" onClick={fundWithGasFaucet} disabled={fundingGas}>
-              {fundingGas ? "Consiguiendo…" : "Conseguir ETH de gas"}
+              {fundingGas ? "Getting…" : "Get gas ETH"}
             </Button>
           </div>
         </div>
       ) : (
         <div className="rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
-          Gas pagado en USD₮ (sin ETH)
+          Gas paid in USD₮ (no ETH)
         </div>
       )}
 
       <div>
-        <div className="mb-1 text-xs text-muted-foreground">Movimientos</div>
+        <div className="mb-1 text-xs text-muted-foreground">Activity</div>
         {history.length === 0 ? (
-          <div className="text-sm text-muted-foreground">Aún no hay movimientos.</div>
+          <div className="text-sm text-muted-foreground">No activity yet.</div>
         ) : (
           <ul className="flex flex-col gap-1 text-sm">
             {history.map((entry) => (
               <li key={entry.hash} className="flex justify-between">
-                <span>{entry.kind === "in" ? "Recibido" : "Enviado"}</span>
+                <span>{entry.kind === "in" ? "Received" : "Sent"}</span>
                 <span className="font-mono">{formatUsdt(entry.amount)} USD₮</span>
               </li>
             ))}

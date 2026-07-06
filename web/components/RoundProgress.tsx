@@ -12,9 +12,9 @@ type Props = {
 };
 
 const STATUS_LABEL: Record<Props["status"], string> = {
-  funding: "En financiamiento",
-  active: "Activa",
-  closed: "Cerrada",
+  funding: "Funding",
+  active: "Active",
+  closed: "Closed",
 };
 
 /** Pure display component — safe to render from a Server Component. */
@@ -26,7 +26,7 @@ export function RoundProgress({ raised, goal, capMultiple, revenueBps, deadline,
       <div className="mb-2 flex items-center justify-between text-sm">
         <Badge className="border-transparent bg-primary/15 text-primary">{STATUS_LABEL[status]}</Badge>
         <span className="text-muted-foreground">
-          Cierra {deadline.toLocaleDateString("es-PE")}
+          Closes {deadline.toLocaleDateString("en-US")}
         </span>
       </div>
 
@@ -43,8 +43,8 @@ export function RoundProgress({ raised, goal, capMultiple, revenueBps, deadline,
       </div>
 
       <div className="mt-4 flex gap-4 text-xs text-muted-foreground">
-        <span>Reparto a hinchas: {formatBps(revenueBps)} de la recaudación</span>
-        <span>Tope: {formatCapMultiple(capMultiple)}</span>
+        <span>Revenue share to fans: {formatBps(revenueBps)} of revenue</span>
+        <span>Cap: {formatCapMultiple(capMultiple)}</span>
       </div>
     </Card>
   );

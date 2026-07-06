@@ -7,7 +7,7 @@ export function formatUsdt(baseUnits: bigint | number | string): string {
   const whole = value / 10n ** BigInt(USDT_DECIMALS);
   const fraction = value % 10n ** BigInt(USDT_DECIMALS);
   const fractionStr = fraction.toString().padStart(USDT_DECIMALS, "0").slice(0, 2);
-  return `${whole.toLocaleString("es-PE")}.${fractionStr}`;
+  return `${whole.toLocaleString("en-US")}.${fractionStr}`;
 }
 
 export function parseUsdt(amount: string): bigint {
@@ -17,7 +17,7 @@ export function parseUsdt(amount: string): bigint {
 }
 
 export function formatFiat(amount: number, currency = "USD"): string {
-  return new Intl.NumberFormat("es-PE", { style: "currency", currency }).format(amount);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
 }
 
 export function formatCapMultiple(bps: number): string {

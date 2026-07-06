@@ -47,7 +47,7 @@ export default async function DashboardPage() {
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-16">
       <header className="flex flex-col gap-1">
         <span className="font-display text-lg uppercase tracking-widest text-primary">
-          Panel del club
+          Club dashboard
         </span>
         <h1 className="font-display text-5xl uppercase tracking-wide">{club.name}</h1>
         <p className="font-mono text-xs text-muted-foreground">{club.walletAddress}</p>
@@ -61,14 +61,14 @@ export default async function DashboardPage() {
         />
       ) : (
         <p className="text-sm text-amber-600 dark:text-amber-400">
-          Falta configurar NEXT_PUBLIC_USDT_ADDRESS para crear rondas.
+          NEXT_PUBLIC_USDT_ADDRESS needs to be configured to create rounds.
         </p>
       )}
 
       <section className="flex flex-col gap-6">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Tus rondas</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Your rounds</h2>
         {roundsWithRaised.length === 0 && (
-          <p className="text-muted-foreground">Todavía no creaste una ronda.</p>
+          <p className="text-muted-foreground">You haven&apos;t created a round yet.</p>
         )}
         {roundsWithRaised.map(({ round, raised }) => (
           <div key={round.id} className="flex flex-col gap-3">

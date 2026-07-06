@@ -56,14 +56,14 @@ export default async function ClubPage({ params }: Props) {
           ) : (
             <div className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
               <Link href="/auth/sign-in" className="font-medium text-primary hover:underline">
-                Iniciá sesión
+                Sign in
               </Link>{" "}
-              para invertir en este club.
+              to invest in this club.
             </div>
           )}
         </section>
       ) : (
-        <p className="text-muted-foreground">Este club todavía no tiene una ronda activa.</p>
+        <p className="text-muted-foreground">This club doesn&apos;t have an active round yet.</p>
       )}
     </div>
   );

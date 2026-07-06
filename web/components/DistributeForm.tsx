@@ -34,7 +34,7 @@ export function DistributeForm({ roundAddress }: Props) {
   async function handleDistribute() {
     if (!userId) return;
     setStatus("pending");
-    const toastId = toast.loading("Preparando…");
+    const toastId = toast.loading("Preparing…");
     try {
       await createWallet(userId); // no-ops if a wallet already exists
       const wallet = await getWallet(userId);
@@ -44,14 +44,14 @@ export function DistributeForm({ roundAddress }: Props) {
       // approve first if needed, same as invest().
       const allowance = await usdtAllowance(wallet.address, roundAddress);
       if (allowance < value) {
-        toast.loading("Aprobando USD₮…", { id: toastId });
+        toast.loading("Approving USD₮…", { id: toastId });
         await approveUsdt(wallet, roundAddress, value);
       }
 
-      toast.loading("Distribuyendo…", { id: toastId });
+      toast.loading("Distributing…", { id: toastId });
       await distribute(wallet, roundAddress, value);
 
-      toast.success("Reparto enviado", { id: toastId });
+      toast.success("Distribution sent", { id: toastId });
       setStatus("done");
     } catch (err) {
       setStatus("idle");
@@ -61,7 +61,7 @@ export function DistributeForm({ roundAddress }: Props) {
 
   return (
     <Card className="flex flex-col gap-3 p-5">
-      <Label htmlFor="revenue-amount">Recaudación a distribuir (USD₮)</Label>
+      <Label htmlFor="revenue-amount">Revenue to distribute (USD₮)</Label>
       <Input
         id="revenue-amount"
         type="number"
@@ -71,7 +71,7 @@ export function DistributeForm({ roundAddress }: Props) {
         onChange={(e) => setRevenue(e.target.value)}
       />
       <Button onClick={handleDistribute} disabled={!userId || status === "pending"}>
-        {status === "pending" ? "Distribuyendo…" : "Distribuir recaudación"}
+        {status === "pending" ? "Distributing…" : "Distribute revenue"}
       </Button>
     </Card>
   );

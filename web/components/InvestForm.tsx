@@ -25,7 +25,7 @@ export function InvestForm({ roundAddress, onInvested }: Props) {
   async function handleInvest() {
     if (!userId) return;
     setStatus("pending");
-    const toastId = toast.loading("Preparando…");
+    const toastId = toast.loading("Preparing…");
     try {
       await createWallet(userId); // no-ops if a wallet already exists
       const wallet = await getWallet(userId);
@@ -35,14 +35,14 @@ export function InvestForm({ roundAddress, onInvested }: Props) {
       // round doesn't already have enough allowance from a previous invest.
       const allowance = await usdtAllowance(wallet.address, roundAddress);
       if (allowance < value) {
-        toast.loading("Aprobando USD₮…", { id: toastId });
+        toast.loading("Approving USD₮…", { id: toastId });
         await approveUsdt(wallet, roundAddress, value);
       }
 
-      toast.loading("Invirtiendo…", { id: toastId });
+      toast.loading("Investing…", { id: toastId });
       const hash = await invest(wallet, roundAddress, value);
 
-      toast.success("¡Inversión confirmada!", { id: toastId });
+      toast.success("Investment confirmed!", { id: toastId });
       setStatus("done");
       onInvested?.(hash);
     } catch (err) {
@@ -53,7 +53,7 @@ export function InvestForm({ roundAddress, onInvested }: Props) {
 
   return (
     <Card className="flex flex-col gap-3 p-5">
-      <Label htmlFor="invest-amount">Monto a invertir (USD₮)</Label>
+      <Label htmlFor="invest-amount">Amount to invest (USD₮)</Label>
       <Input
         id="invest-amount"
         type="number"
@@ -63,12 +63,13 @@ export function InvestForm({ roundAddress, onInvested }: Props) {
         onChange={(e) => setAmount(e.target.value)}
       />
       <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm font-medium text-amber-700 dark:text-amber-200">
-        ⚠️ Sin reembolso. Comprás un derecho a % de ingresos del club, no una
-        garantía. Si la ronda no llega a la meta, tu USD₮ igual va al club y
-        cobrás según los ingresos reales. Tus llaves son tuyas.
+        ⚠️ No refunds. You&apos;re buying a right to a % of the club&apos;s
+        revenue, not a guarantee. If the round doesn&apos;t reach its goal,
+        your USD₮ still goes to the club and you get paid based on real
+        revenue. Your keys are yours.
       </p>
       <Button onClick={handleInvest} disabled={!userId || status === "pending"}>
-        {status === "pending" ? "Invirtiendo…" : "Invertir"}
+        {status === "pending" ? "Investing…" : "Invest"}
       </Button>
     </Card>
   );
