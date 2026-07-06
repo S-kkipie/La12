@@ -28,19 +28,19 @@ export default async function Home() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-16">
       <header className="flex flex-col gap-3">
-        <span className="text-sm font-semibold uppercase tracking-wide text-emerald-600">
+        <span className="font-display text-lg uppercase tracking-widest text-primary">
           La Doce
         </span>
-        <h1 className="text-4xl font-bold tracking-tight">
+        <h1 className="font-display text-6xl uppercase leading-[0.95] tracking-wide">
           Sé socio de tu club, en USD₮.
         </h1>
-        <p className="max-w-xl text-lg text-zinc-600 dark:text-zinc-400">
+        <p className="max-w-xl text-lg text-muted-foreground">
           Financiá la temporada de tu club y cobrá tu parte de la recaudación —
           sin banco, sin custodia, con tu propia billetera.
         </p>
         <Link
           href={session ? (session.user.role === "club" ? "/dashboard" : "/wallet") : "/signup"}
-          className="w-fit rounded-full bg-emerald-600 px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-emerald-700"
+          className="w-fit rounded-full bg-primary px-8 py-3 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90"
         >
           {session ? (session.user.role === "club" ? "Ir a mi panel" : "Ir a mi billetera") : "Crear cuenta"}
         </Link>
@@ -48,16 +48,16 @@ export default async function Home() {
 
       {club && (
         <section className="flex flex-col gap-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Club destacado
           </h2>
           <Link
             href={`/club/${club.slug}`}
-            className="rounded-xl border border-black/10 p-6 transition-colors hover:border-emerald-600 dark:border-white/10"
+            className="block rounded-lg border border-border bg-card p-6 transition-colors hover:border-primary"
           >
-            <h3 className="text-2xl font-semibold">{club.name}</h3>
+            <h3 className="font-display text-3xl uppercase tracking-wide">{club.name}</h3>
             {club.description && (
-              <p className="mt-2 text-zinc-600 dark:text-zinc-400">{club.description}</p>
+              <p className="mt-2 text-muted-foreground">{club.description}</p>
             )}
           </Link>
 
