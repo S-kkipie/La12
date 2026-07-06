@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LA DOCE | Sé socio de tu club</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Geist:wght@100;300;400;600;800&amp;family=Public+Sans:ital,wght@0,400;0,700;0,900;1,900&amp;family=JetBrains+Mono:wght@400;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        stadium: "#0b0f0d",
+                        card: "#131a16",
+                        neon: "#b6ff3c",
+                        "on-neon": "#08120a",
+                        offwhite: "#e8f0ea",
+                        muted: "#8fa397",
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.625rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        headline: ["Public Sans", "sans-serif"],
+                        display: ["Bebas Neue", "cursive"],
+                        body: ["Geist", "sans-serif"],
+                        mono: ["JetBrains Mono", "monospace"],
+                        label: ["Public Sans", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glow-neon {
+            box-shadow: 0 0 15px rgba(182, 255, 60, 0.2);
+        }
+        .glow-neon-strong {
+            box-shadow: 0 0 25px rgba(182, 255, 60, 0.4);
+        }
+        .stadium-overlay {
+            background: radial-gradient(circle at top, rgba(182, 255, 60, 0.08) 0%, transparent 70%);
+        }
+        .jersey-tracking {
+            letter-spacing: -0.02em;
+        }
+    </style>
+</head>
+<body class="bg-stadium text-offwhite font-body selection:bg-neon selection:text-on-neon overflow-x-hidden">
+<!-- TopNavBar (Shared Component) -->
+<nav class="bg-[#0b0f0d] text-[#e8f0ea] border-b border-[#131a16] shadow-[0_4px_20px_rgba(182,255,60,0.05)] flex justify-between items-center w-full px-8 py-4 max-w-full mx-auto fixed top-0 z-50">
+<div class="text-2xl font-display font-black italic text-[#b6ff3c] tracking-tighter">
+            LA DOCE
+        </div>
+<div class="hidden md:flex items-center gap-8">
+<a class="font-headline uppercase tracking-tighter text-[#8fa397] hover:text-[#e8f0ea] transition-colors duration-200" href="#">Clubes</a>
+<a class="font-headline uppercase tracking-tighter text-[#8fa397] hover:text-[#e8f0ea] transition-colors duration-200" href="#">Cómo funciona</a>
+<a class="font-headline uppercase tracking-tighter text-[#8fa397] hover:text-[#e8f0ea] transition-colors duration-200" href="#">Mercado</a>
+<a class="font-headline uppercase tracking-tighter text-[#8fa397] hover:text-[#e8f0ea] transition-colors duration-200" href="#">Mi Cartera</a>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">search</span>
+<input class="bg-[#131a16] border-none rounded-full py-1.5 pl-10 pr-4 text-sm focus:ring-1 focus:ring-[#b6ff3c] w-48 transition-all" placeholder="Buscar club..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="hover:bg-[#131a16] transition-colors duration-200 p-2 rounded-full relative">
+<span class="material-symbols-outlined text-[#8fa397]">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-[#b6ff3c] rounded-full"></span>
+</button>
+<button class="hover:bg-[#131a16] transition-colors duration-200 p-2 rounded-full">
+<span class="material-symbols-outlined text-[#8fa397]">account_circle</span>
+</button>
+<button class="bg-[#b6ff3c] text-[#08120a] px-6 py-2 rounded-full font-headline font-bold uppercase tracking-tighter active:scale-95 transition-transform">
+                    Invertir
+                </button>
+</div>
+</div>
+</nav>
+<main class="pt-20">
+<!-- Hero Section -->
+<section class="relative min-h-[921px] flex flex-col items-center justify-center text-center px-4 overflow-hidden">
+<!-- Atmospheric Background -->
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-[url('placeholder')] bg-cover bg-center opacity-30 mix-blend-luminosity" data-alt="A cinematic low-angle shot of a massive football stadium at night, with towering floodlights casting dramatic beams through a light mist. The crowd is a dark, textured sea of shadows. The color palette is dominated by deep blacks and cool grays, creating a high-energy matchday atmosphere consistent with a dark-mode premium sports platform."></div>
+<div class="absolute inset-0 bg-gradient-to-t from-stadium via-transparent to-stadium/80"></div>
+<div class="stadium-overlay absolute inset-0"></div>
+</div>
+<div class="relative z-10 max-w-5xl mx-auto space-y-6">
+<div class="inline-block px-4 py-1 border border-neon/30 bg-neon/10 rounded-full mb-4">
+<span class="text-neon font-mono text-sm tracking-widest uppercase">Próxima Fecha: Registro Abierto</span>
+</div>
+<h1 class="text-7xl md:text-9xl font-display leading-[0.85] jersey-tracking text-offwhite drop-shadow-2xl">
+                    SÉ SOCIO DE TU CLUB,<br/>
+<span class="text-neon italic">EN USD₮</span>
+</h1>
+<p class="max-w-2xl mx-auto text-muted text-lg md:text-xl font-body leading-relaxed">
+                    Che, el sentimiento no se negocia, pero ahora se capitaliza. Invertí en el desarrollo de tu club y llevate una tajada de las transferencias. La pasión ahora rinde en tu billetera.
+                </p>
+<div class="pt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+<button class="group bg-neon text-on-neon px-10 py-5 rounded-full font-headline font-black uppercase text-xl tracking-tighter glow-neon hover:glow-neon-strong transition-all duration-300 flex items-center gap-3">
+                        Empezar a Invertir
+                        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<button class="px-10 py-5 rounded-full font-headline font-bold uppercase text-xl tracking-tighter border-2 border-offwhite/10 hover:bg-offwhite/5 transition-colors">
+                        Ver Clubes
+                    </button>
+</div>
+</div>
+<!-- Scroll Indicator -->
+<div class="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce opacity-50">
+<span class="material-symbols-outlined text-3xl">keyboard_double_arrow_down</span>
+</div>
+</section>
+<!-- Featured Club Section -->
+<section class="py-24 px-8 max-w-7xl mx-auto">
+<div class="flex justify-between items-end mb-12">
+<div>
+<h2 class="font-display text-5xl uppercase italic text-offwhite tracking-tight">Clubes Destacados</h2>
+<p class="text-muted font-body">Las mejores oportunidades de la fecha en el mercado.</p>
+</div>
+<a class="text-neon font-headline font-bold uppercase tracking-tighter flex items-center gap-2 hover:underline" href="#">
+                    Ver todo el mercado <span class="material-symbols-outlined">chevron_right</span>
+</a>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Main Featured Card -->
+<div class="bg-card border border-white/5 rounded-lg overflow-hidden glow-neon relative group transition-transform duration-500 hover:-translate-y-2">
+<div class="p-8 space-y-8">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-5">
+<div class="w-20 h-20 bg-stadium rounded-full flex items-center justify-center p-3 border border-white/10 shadow-inner">
+<img class="w-full h-full object-contain" data-alt="A stylized minimalist football club crest for a team called 'El Porvenir', featuring bold geometric shapes and a classic shield profile. The colors are deep charcoal and vibrant neon lime, set against a dark textured background to match the stadium aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPH7cWh0u73JNCn5Hug8l5A22pdoIra9KcmLLF1TqJUgoZFD9nKpRJB2Fce_s2zAtjxDsBCJWpiwsDdgyKRp1sVf1-NADfpB6a0qz1BCwP36XlUNQSw_aMR_624XON9su6buGYik4bxX3fCBj4SyEtXcgyvVVZhGHh-5Gl9JXX5Q8MLnRFXBLFcWvnoYlohz0HP_eYRgVLAwDlhqzspxNntTCNkzOFs0s-5cFIGUAWULMMCQwoPGZG0eoHB_ZeYEwhcWkZ9NEFVsE"/>
+</div>
+<div>
+<h3 class="font-display text-4xl uppercase tracking-tight text-neon">C.A. EL PORVENIR</h3>
+<span class="text-muted font-mono text-sm">TOKEN: $PORV</span>
+</div>
+</div>
+<div class="bg-neon/10 px-3 py-1 rounded text-neon font-mono text-xs font-bold border border-neon/20">
+                                HOT DEAL
+                            </div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between text-sm font-headline uppercase tracking-widest text-muted">
+<span>Progreso de Financiación</span>
+<span class="text-neon font-mono">82%</span>
+</div>
+<div class="h-3 bg-stadium rounded-full overflow-hidden border border-white/5 p-0.5">
+<div class="h-full bg-neon rounded-full glow-neon" style="width: 82%"></div>
+</div>
+<div class="flex justify-between font-mono text-xs text-muted">
+<span>RECAUDADO: 820.000 USDT</span>
+<span>META: 1.000.000 USDT</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6 pt-4">
+<div class="bg-stadium/50 border border-white/5 p-6 rounded-lg text-center space-y-1">
+<span class="text-muted text-[10px] font-headline uppercase tracking-[0.2em]">Reparto Estimado</span>
+<div class="font-display text-5xl text-offwhite jersey-tracking">REPARTO 8%</div>
+</div>
+<div class="bg-stadium/50 border border-white/5 p-6 rounded-lg text-center space-y-1">
+<span class="text-muted text-[10px] font-headline uppercase tracking-[0.2em]">Tope de Ganancia</span>
+<div class="font-display text-5xl text-offwhite jersey-tracking">TOPE 1.5X</div>
+</div>
+</div>
+<p class="text-muted leading-relaxed italic">
+                            "Dale una mano al club de tus amores. Esta guita va directo a las inferiores y a la remodelación del playón. A cambio, sos dueño de una parte del futuro del club."
+                        </p>
+<button class="w-full bg-neon text-on-neon py-4 rounded font-headline font-black uppercase text-lg tracking-tighter active:scale-95 transition-all">
+                            Invertir Ahora
+                        </button>
+</div>
+<!-- Card Background Glow Effect -->
+<div class="absolute -bottom-24 -right-24 w-64 h-64 bg-neon/5 blur-[100px] pointer-events-none"></div>
+</div>
+<!-- Secondary Grid -->
+<div class="grid grid-rows-2 gap-8">
+<!-- Second Card -->
+<div class="bg-card border border-white/5 rounded-lg p-8 flex flex-col justify-between hover:border-neon/30 transition-colors">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-stadium rounded-full p-2 border border-white/10">
+<img class="w-full h-full object-contain" data-alt="A minimalist sports logo for 'Deportivo Sur', featuring an abstract compass or star element in neon lime and white, set against a dark stadium-black background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4N-XW4GbP-vv_VhN15k7sYvXsE4lWGgHA4ATcD0imjoQ__Ziak0jmwI_Jkwc_6yiu6nCttT7qYwwzCFO_0UlHyvd19rbp0maN88zxeDZLBEOx54NYPFmNHhVxKc6LyyjSnqANImgQ9K0aTSiLi2rePFOHLbYjzFOOOAY5urwE9NACX2_MBG2kWCiTGxehLAKinyWyD0eBb6Me-VGBvndGUdIM8mpyi5OFaMKoMxPHpTB56-8WVCfdD7JAqcEPYLgRH3IaCx0Vdk0"/>
+</div>
+<h4 class="font-display text-2xl uppercase text-offwhite">DEPORTIVO SUR</h4>
+</div>
+<div class="font-display text-3xl text-neon">REPARTO 12%</div>
+</div>
+<div class="mt-6 flex gap-4 items-center">
+<div class="flex-1 h-2 bg-stadium rounded-full overflow-hidden">
+<div class="h-full bg-offwhite/20 w-1/3"></div>
+</div>
+<span class="font-mono text-sm text-muted">33% FUNDED</span>
+</div>
+<button class="mt-6 border border-white/10 hover:border-neon hover:text-neon py-3 rounded font-headline font-bold uppercase transition-all">
+                            Ver Detalles
+                        </button>
+</div>
+<!-- Third Card -->
+<div class="bg-card border border-white/5 rounded-lg p-8 flex flex-col justify-between hover:border-neon/30 transition-colors">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-stadium rounded-full p-2 border border-white/10">
+<img class="w-full h-full object-contain" data-alt="A geometric sports logo for 'Atlético Norte', using sharp angles and a lightning-bolt-like motif in neon lime and gray, tailored for a premium fintech-sports hybrid UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuADxbxNQ3A1F9bjK0hkUaIGVkJZMeP6LEnq_fnUylLa7UDMHYa49Bqmt4OXg9GaYdNTupMZTvpMevl_qeRIdW6EnTpbznUmIm0cxk-ZClUjidO_JMMVqztoSAdwG4Vb_BU6DBynW8bAdcaIsTEcQX59iz4MIF2Bh7hsNu3v1DPLy_YcLVYhM5mZcCPCeAxiUvYb32oKyY_dzGaerK4Wpr0hd8vIWOWDtSiIfZ5RJNo1LLJoPZ6hlQ9q54Mlhhs1-h2JtqcS7j1vJ0E"/>
+</div>
+<h4 class="font-display text-2xl uppercase text-offwhite">ATLÉTICO NORTE</h4>
+</div>
+<div class="font-display text-3xl text-neon">TOPE 2.0X</div>
+</div>
+<div class="mt-6 flex gap-4 items-center">
+<div class="flex-1 h-2 bg-stadium rounded-full overflow-hidden">
+<div class="h-full bg-neon w-4/5 shadow-[0_0_10px_rgba(182,255,60,0.3)]"></div>
+</div>
+<span class="font-mono text-sm text-neon">80% FUNDED</span>
+</div>
+<button class="mt-6 border border-white/10 hover:border-neon hover:text-neon py-3 rounded font-headline font-bold uppercase transition-all">
+                            Ver Detalles
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Strip -->
+<section class="bg-neon text-on-neon py-12 relative overflow-hidden">
+<div class="absolute inset-0 bg-[url('placeholder')] opacity-10 mix-blend-multiply" data-alt="A seamless macro pattern of a football jersey fabric texture, showing the intricate weave of the technical mesh material. The lighting is harsh and direct, highlighting the physical texture, perfectly suited for a high-performance sports brand asset."></div>
+<div class="max-w-7xl mx-auto px-8 relative z-10 flex flex-wrap justify-between gap-8 items-center">
+<div class="flex flex-col">
+<span class="font-headline font-black uppercase text-sm tracking-widest opacity-60">Invertido Hoy</span>
+<span class="font-display text-6xl jersey-tracking leading-none">2.4M USDT</span>
+</div>
+<div class="w-px h-16 bg-on-neon/20 hidden md:block"></div>
+<div class="flex flex-col">
+<span class="font-headline font-black uppercase text-sm tracking-widest opacity-60">Clubes Activos</span>
+<span class="font-display text-6xl jersey-tracking leading-none">42 EQUIPOS</span>
+</div>
+<div class="w-px h-16 bg-on-neon/20 hidden md:block"></div>
+<div class="flex flex-col">
+<span class="font-headline font-black uppercase text-sm tracking-widest opacity-60">Hinchas Socios</span>
+<span class="font-display text-6xl jersey-tracking leading-none">+120.000</span>
+</div>
+<div class="w-px h-16 bg-on-neon/20 hidden md:block"></div>
+<div class="flex flex-col">
+<span class="font-headline font-black uppercase text-sm tracking-widest opacity-60">Repartido</span>
+<span class="font-display text-6xl jersey-tracking leading-none">580K USDT</span>
+</div>
+</div>
+</section>
+<!-- Features Bento Grid -->
+<section class="py-32 px-8 max-w-7xl mx-auto">
+<h2 class="font-display text-6xl uppercase italic text-center mb-16">¿POR QUÉ LA DOCE?</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Bento Item 1 -->
+<div class="md:col-span-2 bg-card p-10 rounded-lg border border-white/5 relative overflow-hidden flex flex-col justify-end min-h-[350px]">
+<div class="absolute top-0 right-0 p-8">
+<span class="material-symbols-outlined text-neon text-6xl opacity-20">verified_user</span>
+</div>
+<div class="relative z-10">
+<h3 class="font-display text-4xl uppercase text-neon mb-4">Transparencia de Cristal</h3>
+<p class="text-muted max-w-md">Cada peso que entra se trackea en la blockchain. No más "plata quemada" en los pasillos de la AFA. Acá ves a dónde va cada centavo.</p>
+</div>
+</div>
+<!-- Bento Item 2 -->
+<div class="bg-neon p-10 rounded-lg flex flex-col justify-center items-center text-center space-y-6">
+<span class="material-symbols-outlined text-on-neon text-7xl" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<h3 class="font-headline font-black text-on-neon text-2xl uppercase tracking-tighter">RETIRÁ CUANDO QUIERAS</h3>
+<p class="text-on-neon/70 font-bold">Mercado secundario abierto 24/7 para que liquides tus tokens si necesitás el efectivo.</p>
+</div>
+<!-- Bento Item 3 -->
+<div class="bg-card p-10 rounded-lg border border-white/5 flex flex-col justify-between">
+<div class="w-12 h-12 bg-neon/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-neon">show_chart</span>
+</div>
+<div>
+<h3 class="font-display text-3xl uppercase text-offwhite mb-2">ROI PASIONAL</h3>
+<p class="text-muted text-sm">Rendimiento basado en el éxito deportivo y financiero. Si al club le va bien, a vos también.</p>
+</div>
+</div>
+<!-- Bento Item 4 -->
+<div class="md:col-span-2 bg-[url('placeholder')] bg-cover bg-center rounded-lg relative min-h-[300px] overflow-hidden group" data-alt="A dynamic action shot of a young football talent in a dimly lit stadium tunnel, looking towards the bright pitch. The player wears a generic but professional training kit. The high-contrast lighting and gritty texture evoke a sense of future potential and the 'scouting' aspect of the platform.">
+<div class="absolute inset-0 bg-gradient-to-r from-stadium to-transparent"></div>
+<div class="absolute inset-0 p-10 flex flex-col justify-center">
+<h3 class="font-display text-4xl uppercase text-offwhite mb-4">DUEÑOS DEL FUTURO</h3>
+<p class="text-offwhite/80 max-w-sm">Invertí en porcentajes de futuras ventas de juveniles. El próximo crack puede ser el que financiaste vos.</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-stadium border-t border-white/5 py-16 px-8">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12">
+<div class="space-y-6">
+<div class="text-4xl font-display font-black italic text-neon tracking-tighter">LA DOCE</div>
+<p class="text-muted max-w-xs font-body">La primera plataforma de financiamiento participativo para clubes de fútbol con tecnología blockchain.</p>
+<div class="flex gap-4">
+<a class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-neon hover:text-on-neon transition-all" href="#">
+<span class="material-symbols-outlined text-lg">public</span>
+</a>
+<a class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-neon hover:text-on-neon transition-all" href="#">
+<span class="material-symbols-outlined text-lg">share</span>
+</a>
+</div>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-12">
+<div class="space-y-4">
+<h5 class="font-headline font-bold uppercase text-offwhite text-sm tracking-widest">Plataforma</h5>
+<ul class="space-y-2 text-muted text-sm">
+<li><a class="hover:text-neon" href="#">Clubes</a></li>
+<li><a class="hover:text-neon" href="#">Mercado</a></li>
+<li><a class="hover:text-neon" href="#">Estadísticas</a></li>
+<li><a class="hover:text-neon" href="#">Tokenomics</a></li>
+</ul>
+</div>
+<div class="space-y-4">
+<h5 class="font-headline font-bold uppercase text-offwhite text-sm tracking-widest">Legal</h5>
+<ul class="space-y-2 text-muted text-sm">
+<li><a class="hover:text-neon" href="#">Términos</a></li>
+<li><a class="hover:text-neon" href="#">Privacidad</a></li>
+<li><a class="hover:text-neon" href="#">Cumplimiento</a></li>
+<li><a class="hover:text-neon" href="#">Riesgos</a></li>
+</ul>
+</div>
+<div class="space-y-4 col-span-2 sm:col-span-1">
+<h5 class="font-headline font-bold uppercase text-offwhite text-sm tracking-widest">Soporte</h5>
+<ul class="space-y-2 text-muted text-sm">
+<li><a class="hover:text-neon" href="#">Centro de Ayuda</a></li>
+<li><a class="hover:text-neon" href="#">Contacto</a></li>
+<li><a class="hover:text-neon" href="#">Comunidad</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+<span class="font-mono text-xs text-muted">© 2024 LA DOCE PROTOCOL. BUENOS AIRES, ARGENTINA.</span>
+<div class="flex items-center gap-2 font-mono text-xs text-neon">
+<span class="w-2 h-2 bg-neon rounded-full animate-pulse"></span>
+                NETWORK STATUS: OPTIMAL
+            </div>
+</div>
+</footer>
+<script>
+        // Micro-interactions and effects
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mousedown', () => {
+                button.style.transform = 'scale(0.95)';
+            });
+            button.addEventListener('mouseup', () => {
+                button.style.transform = 'scale(1)';
+            });
+        });
+
+        // Sticky Navbar subtle shift on scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('bg-opacity-95', 'backdrop-blur-md');
+            } else {
+                nav.classList.remove('bg-opacity-95', 'backdrop-blur-md');
+            }
+        });
+    </script>
+</body></html>

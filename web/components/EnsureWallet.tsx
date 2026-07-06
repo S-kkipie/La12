@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ensureWalletLinked } from "@/lib/ensureWallet";
 import { friendlyError } from "@/lib/txError";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Props = {
   userId: string;
@@ -34,7 +35,12 @@ export function EnsureWallet({ userId, hasWalletLinked }: Props) {
   }, [hasWalletLinked, router, userId]);
 
   if (!hasWalletLinked && healing) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Configurando tu billetera…</p>;
+    return (
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <Skeleton className="size-4 rounded-full" />
+        Configurando tu billetera…
+      </div>
+    );
   }
   return null;
 }

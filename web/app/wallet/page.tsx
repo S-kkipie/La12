@@ -13,7 +13,7 @@ export default async function WalletPage() {
   // distribute() can pull from it) — any authenticated session is enough
   // here, unlike /dashboard which is club-only.
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) redirect("/login");
+  if (!session) redirect("/auth/sign-in");
 
   // Self-heal an interrupted signup/login (see lib/ensureWallet.ts): if this
   // account has no linked wallet row yet, EnsureWallet creates + links one.
@@ -29,7 +29,7 @@ export default async function WalletPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
-      <h1 className="text-3xl font-bold tracking-tight">Tu billetera</h1>
+      <h1 className="font-display text-5xl uppercase tracking-wide">Tu billetera</h1>
       <EnsureWallet userId={session.user.id} hasWalletLinked={hasWalletLinked} />
       <WalletCard />
       {round && <ClaimButton roundAddress={round.contractAddress as `0x${string}`} />}
