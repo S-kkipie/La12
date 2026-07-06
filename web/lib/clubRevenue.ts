@@ -19,6 +19,10 @@ import {
 } from "@/lib/contracts";
 
 const BPS_DENOM = 10_000n;
+// getRoundInvestors/getRoundHolders/backer-count only see `Invested` events from
+// roughly the last LOG_WINDOW blocks (public-RPC eth_getLogs cap), so on an old
+// round the holder cap-table and backer count can undercount. `raised`/`distributed`
+// totals are unaffected — they're direct contract reads, not log-derived.
 const LOG_WINDOW = 40_000n; // public RPCs cap eth_getLogs (~40-50k blocks)
 
 const INVESTED_EVENT = parseAbiItem(
@@ -101,8 +105,6 @@ export function capUtilization(distributed: bigint, raised: bigint, capMultipleB
   return Math.min(100, pct);
 }
 
-const STATUS: RoundStatus[] = ["funding", "active", "closed"];
-
 // --- on-chain orchestration -------------------------------------------------
 async function windowFromBlock(): Promise<bigint> {
   const latest = await publicClient.getBlockNumber();
@@ -150,10 +152,10 @@ export async function getClubOverview(clubId: number): Promise<{ totals: ClubTot
   const enriched = await Promise.all(
     rows.map(async (row): Promise<ClubRound> => {
       const address = row.contractAddress as `0x${string}`;
-      const [raised, supply, stateIdx, distributed, investors] = await Promise.all([
+      const [raised, supply, status, distributed, investors] = await Promise.all([
         readSafely(() => totalRaised(address), 0n),
         readSafely(() => totalShares(address), 0n),
-        readSafely(async () => STATUS.indexOf((await roundState(address)).toLowerCase() as RoundStatus), 0),
+        readSafely(async () => (await roundState(address)).toLowerCase() as RoundStatus, "funding" as RoundStatus),
         readSafely(() => totalDistributedToHolders(address), 0n),
         readSafely(() => getRoundInvestors(address), [] as `0x${string}`[]),
       ]);
@@ -169,7 +171,7 @@ export async function getClubOverview(clubId: number): Promise<{ totals: ClubTot
         capMultiple: row.capMultiple,
         revenueBps: row.revenueBps,
         deadline: row.deadline,
-        status: STATUS[stateIdx] ?? "funding",
+        status,
         capUtilizationPct: capUtilization(distributed, raised, row.capMultiple),
       };
     }),
@@ -220,6 +222,6 @@ export async function getClubDistributions(clubId: number): Promise<{ distributi
     }),
   );
 
-  const distributions = perRound.flat().sort((a, b) => a.timestamp - b.timestamp);
+  const distributions = perRound.flat();
   return { distributions, series: cumulativeSeries(distributions) };
 }

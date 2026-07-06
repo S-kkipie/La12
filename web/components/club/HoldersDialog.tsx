@@ -23,6 +23,8 @@ export function HoldersDialog({
     try {
       const res = await fetch(`/api/club/holders?round=${round.contractAddress}`).then((r) => r.json());
       setHolders((res.holders ?? []).map(parseHolder));
+    } catch {
+      /* leave empty */
     } finally {
       setLoading(false);
     }

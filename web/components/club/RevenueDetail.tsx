@@ -19,6 +19,8 @@ export function RevenueDetail() {
       ]);
       setRounds((overview.rounds ?? []).map(parseClubRound));
       setDists((dist.distributions ?? []).map(parseDistribution));
+    } catch {
+      /* leave empty */
     } finally {
       setLoading(false);
     }

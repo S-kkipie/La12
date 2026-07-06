@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { friendlyError } from "@/lib/txError";
 import {
   parseClubTotals, parseClubRound, seriesToPoints,
@@ -35,6 +36,14 @@ export function ClubOverview({
   const [distributeRound, setDistributeRound] = useState<ClubRoundView | null>(null);
   const [holdersRound, setHoldersRound] = useState<ClubRoundView | null>(null);
   const [createOpen, setCreateOpen] = useState(searchParams.get("action") === "newRound");
+
+  const handleNewRound = useCallback(() => {
+    if (!usdtAddress) {
+      toast.error("USD₮ address not configured — rounds can't be created.");
+      return;
+    }
+    setCreateOpen(true);
+  }, [usdtAddress]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -75,7 +84,7 @@ export function ClubOverview({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
-      <ClubHero clubName={clubName} totals={totals} onNewRound={() => setCreateOpen(true)} />
+      <ClubHero clubName={clubName} totals={totals} onNewRound={handleNewRound} />
       <RevenueChart points={points} />
       <div className="flex flex-col gap-3">
         <h2 className="font-display text-xl uppercase tracking-wide">Your rounds</h2>
@@ -83,7 +92,7 @@ export function ClubOverview({
           rounds={rounds}
           onDistribute={setDistributeRound}
           onHolders={setHoldersRound}
-          onNewRound={() => setCreateOpen(true)}
+          onNewRound={handleNewRound}
         />
       </div>
 
