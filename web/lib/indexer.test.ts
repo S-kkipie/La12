@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { mapIndexerTransfers, mapTransferLogs, type HistoryEntry } from "./indexer";
+import { mapIndexerTransfers, mapTransferLogs, dedupeEntries, type HistoryEntry } from "./indexer";
 
 const SELF = "0x1111111111111111111111111111111111111111";
 const OTHER = "0x2222222222222222222222222222222222222222";
@@ -33,5 +33,11 @@ assert.equal(fromLogs[0].kind, "in");
 assert.equal(fromLogs[0].amount, 2000000n);
 assert.equal(fromLogs[1].kind, "out");
 assert.equal(fromLogs[1].counterparty.toLowerCase(), OTHER);
+
+// --- dedupeEntries: identical self-transfer duplicate collapses; distinct rows kept ---
+const dupSelf: HistoryEntry = { hash: "0xself", kind: "in", token: SELF as `0x${string}`, amount: 100n, counterparty: SELF as `0x${string}`, blockNumber: 5n, timestamp: 1 };
+const distinct: HistoryEntry = { hash: "0xself", kind: "out", token: SELF as `0x${string}`, amount: 100n, counterparty: OTHER as `0x${string}`, blockNumber: 5n, timestamp: 1 };
+assert.equal(dedupeEntries([dupSelf, { ...dupSelf }]).length, 1);
+assert.equal(dedupeEntries([dupSelf, distinct]).length, 2);
 
 console.log("indexer mappers OK");

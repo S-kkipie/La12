@@ -130,6 +130,18 @@ async function fromLogs(address: `0x${string}`): Promise<HistoryEntry[]> {
   return entries;
 }
 
+/** Drop exact-duplicate transfers (the getLogs fallback queries from+to
+ *  separately, so a self-transfer matches both and appears twice). */
+export function dedupeEntries(entries: HistoryEntry[]): HistoryEntry[] {
+  const seen = new Set<string>();
+  return entries.filter((e) => {
+    const key = `${e.hash}:${e.kind}:${e.counterparty}:${e.amount}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export async function getHistory(address: `0x${string}`): Promise<HistoryEntry[]> {
   let entries: HistoryEntry[] = [];
   try {
@@ -144,6 +156,7 @@ export async function getHistory(address: `0x${string}`): Promise<HistoryEntry[]
       entries = [];
     }
   }
+  entries = dedupeEntries(entries);
   // newest first
   return entries.sort((a, b) => Number(b.blockNumber - a.blockNumber));
 }
