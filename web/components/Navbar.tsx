@@ -3,6 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient, useSession } from "@/lib/auth-client";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function Navbar() {
   const { data: session, isPending } = useSession();
@@ -14,32 +23,46 @@ export function Navbar() {
     router.refresh();
   }
 
+  const home = session ? (session.user.role === "club" ? "/dashboard" : "/wallet") : "/";
+
   return (
-    <nav className="flex items-center justify-between border-b border-black/10 px-6 py-4 dark:border-white/10">
-      <Link href="/" className="text-sm font-semibold uppercase tracking-wide text-emerald-600">
+    <nav className="flex items-center justify-between border-b border-border px-6 py-4">
+      <Link
+        href="/"
+        className="font-display text-2xl uppercase tracking-wide text-primary"
+      >
         La Doce
       </Link>
-      <div className="flex items-center gap-4 text-sm">
+      <div className="flex items-center gap-3 text-sm">
         {isPending ? null : session ? (
-          <>
-            <Link href={session.user.role === "club" ? "/dashboard" : "/wallet"}>
-              {session.user.role === "club" ? "Mi panel" : "Mi billetera"}
-            </Link>
-            <Link href="/account/settings">Mi cuenta</Link>
-            <button
-              onClick={handleLogout}
-              className="text-zinc-500 transition-colors hover:text-zinc-800 dark:hover:text-zinc-200"
-            >
-              Salir
-            </button>
-          </>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="outline-none">
+              <Avatar className="size-9 border border-border">
+                <AvatarFallback className="bg-secondary text-secondary-foreground">
+                  {(session.user.name ?? session.user.email ?? "?").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem render={<Link href={home} />}>
+                {session.user.role === "club" ? "Mi panel" : "Mi billetera"}
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link href="/account/settings" />}>
+                Mi cuenta
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>Salir</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <>
-            <Link href="/auth/sign-in">Iniciar sesión</Link>
             <Link
-              href="/auth/sign-up"
-              className="rounded-full bg-emerald-600 px-4 py-1.5 font-medium text-white transition-colors hover:bg-emerald-700"
+              href="/auth/sign-in"
+              className={buttonVariants({ variant: "ghost", size: "sm" })}
             >
+              Iniciar sesión
+            </Link>
+            <Link href="/auth/sign-up" className={buttonVariants({ size: "sm" })}>
               Crear cuenta
             </Link>
           </>
