@@ -57,15 +57,17 @@ to the darkened green `#2f7d0a` for WCAG AA).
 
 ## Component system (shadcn)
 
-**Install:** `button card input label form progress badge dialog dropdown-menu avatar separator skeleton sonner tabs tooltip sheet`.
-Add `react-hook-form` (zod already present) for `form`. shadcn `sonner` replaces the raw `sonner` Toaster
-wiring in `layout.tsx` (same underlying lib, keeps `richColors position="top-center"`).
+**Install (trimmed to what we actually use — YAGNI):** `button card input label badge skeleton separator dropdown-menu avatar sonner`.
+No `react-hook-form`/`form` — the existing `useState` forms are kept (converting is churn + regression risk).
+`RoundProgress` uses a token-styled bar (stays server-renderable), not the Radix `progress` (client-only).
+shadcn `sonner` replaces the raw `sonner` Toaster wiring in `layout.tsx` (same lib, keeps `richColors position="top-center"`).
+(better-auth-ui's registry bundle pulls its own extra shadcn deps + `@tanstack/react-query`.)
 
 **Existing → shadcn mapping:**
 
 | Component | Migration |
 |---|---|
-| `Navbar` | Bebas logo + `DropdownMenu` (account / salir) + `Sheet` mobile nav + Button CTAs; keep `useSession` gating + role-based links |
+| `Navbar` | Bebas logo + `DropdownMenu` (account / salir) + `Avatar` trigger + Button CTAs; keep `useSession` gating + role-based links (nav is ≤2 items — no `Sheet` needed) |
 | `WalletCard` | `Card` + network `Badge` + big lime balance in Bebas + copy-address button + faucet `Button`s |
 | `InvestForm` | `Form` + `Input` (amount) + `Button`; preserve approve→invest two-step + states |
 | `DistributeForm` | `Form` + `Input` + `Button` (club-only) |
@@ -77,17 +79,25 @@ wiring in `layout.tsx` (same underlying lib, keeps `richColors position="top-cen
 Migration is presentational: props, data flow, and the on-chain call sites in `lib/contracts.ts` are
 untouched. Loading/toast behavior (sonner) is preserved.
 
-## Auth — `@daveyplate/better-auth-ui`
+## Auth — better-auth-ui (shadcn-registry variant)
 
-- Add a client `web/app/providers.tsx` mounting `<AuthUIProvider authClient={authClient}>`, rendered
-  inside `RootLayout`.
-- Replace `web/app/login/page.tsx` and `web/app/signup/page.tsx` with better-auth-ui auth views themed
-  by shadcn tokens. Add **forgot/reset password** views (free with the lib) and a new
-  **`web/app/account/page.tsx`** (profile, change password, salir).
-- **Role selection (club/fan):** configure the provider's `additionalFields` so the signup view renders a
-  role selector that persists to the existing better-auth `role` additional field (`["club","fan"]`,
-  `input: true`). **Fallback:** if the lib can't express the segmented "Soy hincha / Soy un club" control,
-  keep a thin custom themed signup that calls `authClient.signUp.email({...role})`.
+**Variant decision (verified 2026-07-05):** use the **shadcn-registry** better-auth-ui at
+`better-auth-ui.com/docs/shadcn` (`<AuthProvider>` + `@tanstack/react-query`, installed via
+`shadcn add https://better-auth-ui.com/r/all.json`), **not** the classic npm `@daveyplate/better-auth-ui`.
+Reason: only the shadcn-registry variant's `additionalFields` supports `inputType:"select"` with `options`,
+which we need to render the club/fan **role** picker on signup; the classic package renders text/number/bool
+only. Exact APIs are pinned in the implementation plan.
+
+- Add a client `web/components/providers.tsx` mounting `<AuthProvider authClient={authClient} …>` wrapped in
+  `QueryClientProvider`, rendered inside `RootLayout`.
+- Auth routes `web/app/auth/[path]/page.tsx` render the generated `<Auth path>` (`sign-in`, `sign-up`,
+  `forgot-password`, `reset-password`). Account/settings at `web/app/settings/[path]/page.tsx` render
+  `<Settings path>` (`account`, `security`). Old `/login` + `/signup` become redirect stubs.
+- **Role selection (club/fan):** provider `additionalFields=[{name:"role", inputType:"select",
+  options:[{label:"Soy hincha",value:"fan"},{label:"Soy un club",value:"club"}], signUp:true, required:true}]`,
+  persisting to the existing better-auth `role` additional field (`["club","fan"]`, `input:true`).
+  **Fallback (if the registry install fights our stack):** keep a thin custom themed signup that calls
+  `authClient.signUp.email({...role})` with the current segmented "Soy hincha / Soy un club" toggle.
 - **Wallet linking** stays in the existing `EnsureWallet` client component (already self-heals on any
   authed page via server `hasWalletLinked`) — decoupled from the auth form. No wallet logic moves into
   better-auth-ui.
