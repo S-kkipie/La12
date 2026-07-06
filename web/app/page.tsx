@@ -39,7 +39,7 @@ export default async function Home() {
           sin banco, sin custodia, con tu propia billetera.
         </p>
         <Link
-          href={session ? (session.user.role === "club" ? "/dashboard" : "/wallet") : "/signup"}
+          href={session ? (session.user.role === "club" ? "/dashboard" : "/wallet") : "/auth/sign-up"}
           className="w-fit rounded-full bg-primary px-8 py-3 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90"
         >
           {session ? (session.user.role === "club" ? "Ir a mi panel" : "Ir a mi billetera") : "Crear cuenta"}

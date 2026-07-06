@@ -62,7 +62,7 @@ export function InvestForm({ roundAddress, onInvested }: Props) {
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
       />
-      <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm font-medium text-amber-200">
+      <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm font-medium text-amber-700 dark:text-amber-200">
         ⚠️ Sin reembolso. Comprás un derecho a % de ingresos del club, no una
         garantía. Si la ronda no llega a la meta, tu USD₮ igual va al club y
         cobrás según los ingresos reales. Tus llaves son tuyas.

@@ -55,7 +55,7 @@ export default async function ClubPage({ params }: Props) {
             <InvestForm roundAddress={round.contractAddress as `0x${string}`} />
           ) : (
             <div className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
-              <Link href="/login" className="font-medium text-primary hover:underline">
+              <Link href="/auth/sign-in" className="font-medium text-primary hover:underline">
                 Iniciá sesión
               </Link>{" "}
               para invertir en este club.

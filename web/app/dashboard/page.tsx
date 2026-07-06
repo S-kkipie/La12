@@ -19,7 +19,7 @@ import { EnsureWallet } from "@/components/EnsureWallet";
  */
 export default async function DashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) redirect("/login");
+  if (!session) redirect("/auth/sign-in");
   if (session.user.role !== "club") redirect("/wallet");
 
   const [club] = await db.select().from(clubs).where(eq(clubs.userId, session.user.id));
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
           usdtAddress={usdtAddress}
         />
       ) : (
-        <p className="text-sm text-amber-400">
+        <p className="text-sm text-amber-600 dark:text-amber-400">
           Falta configurar NEXT_PUBLIC_USDT_ADDRESS para crear rondas.
         </p>
       )}

@@ -13,7 +13,7 @@ export default async function WalletPage() {
   // distribute() can pull from it) — any authenticated session is enough
   // here, unlike /dashboard which is club-only.
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) redirect("/login");
+  if (!session) redirect("/auth/sign-in");
 
   // Self-heal an interrupted signup/login (see lib/ensureWallet.ts): if this
   // account has no linked wallet row yet, EnsureWallet creates + links one.

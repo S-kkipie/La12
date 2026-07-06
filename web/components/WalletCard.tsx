@@ -132,7 +132,7 @@ export function WalletCard() {
 
   if (error) {
     return (
-      <Card className="border-destructive/40 bg-destructive/10 p-5 text-destructive-foreground">
+      <Card className="border-destructive/40 bg-destructive/10 p-5 text-destructive">
         No se pudo cargar tu billetera: {error}
       </Card>
     );
