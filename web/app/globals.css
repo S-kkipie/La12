@@ -92,7 +92,17 @@
     border-color: var(--border);
   }
   body {
-    background: var(--background);
+    /* Atmospheric top glow (matches the Stitch render) over stadium-black —
+       tinted from the --primary token so it tracks dark lime / light green. */
+    background:
+      radial-gradient(
+        circle at top,
+        color-mix(in oklab, var(--primary) 8%, transparent) 0%,
+        transparent 70%
+      ),
+      var(--background);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     color: var(--foreground);
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   }
