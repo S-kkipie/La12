@@ -11,19 +11,25 @@ export function walletMode(): WalletMode {
 export const USDT_ADDRESS = (process.env.NEXT_PUBLIC_USDT_ADDRESS ??
   "0x0000000000000000000000000000000000dEaD") as `0x${string}`; // TODO(wire): real mock USD₮ address on Sepolia (spec §9)
 
-function required(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`${name} requerido en modo erc4337`);
-  return v;
+// process.env.NEXT_PUBLIC_X must appear as a literal member access at each
+// call site — Next.js only inlines NEXT_PUBLIC_* into the client bundle when
+// it can statically see that exact form; `process.env[name]` (dynamic key)
+// is never replaced and reads empty in the browser.
+function required(name: string, value: string | undefined): string {
+  if (!value) throw new Error(`${name} requerido en modo erc4337`);
+  return value;
 }
 
 export function erc4337Config() {
   return {
     chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 11155111),
-    provider: process.env.NEXT_PUBLIC_RPC_URL ?? required("NEXT_PUBLIC_RPC_URL"),
-    bundlerUrl: required("NEXT_PUBLIC_BUNDLER_URL"),
-    paymasterUrl: required("NEXT_PUBLIC_PAYMASTER_URL"),
-    paymasterAddress: required("NEXT_PUBLIC_PAYMASTER_ADDRESS") as `0x${string}`,
+    provider: required("NEXT_PUBLIC_RPC_URL", process.env.NEXT_PUBLIC_RPC_URL),
+    bundlerUrl: required("NEXT_PUBLIC_BUNDLER_URL", process.env.NEXT_PUBLIC_BUNDLER_URL),
+    paymasterUrl: required("NEXT_PUBLIC_PAYMASTER_URL", process.env.NEXT_PUBLIC_PAYMASTER_URL),
+    paymasterAddress: required(
+      "NEXT_PUBLIC_PAYMASTER_ADDRESS",
+      process.env.NEXT_PUBLIC_PAYMASTER_ADDRESS
+    ) as `0x${string}`,
     safeModulesVersion: process.env.NEXT_PUBLIC_SAFE_MODULES_VERSION ?? "0.3.0",
     paymasterToken: { address: USDT_ADDRESS },
   };

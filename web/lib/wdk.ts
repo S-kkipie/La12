@@ -232,12 +232,35 @@ export async function signer(userId: string): Promise<LocalAccount> {
 }
 
 /**
+ * Bundler's `sendUserOperation` resolves with the UserOp hash, not an L1 tx
+ * hash — `eth_getTransactionReceipt` (what viem's `waitForTransactionReceipt`
+ * polls) will never find it, it only exists on the bundler's side until the
+ * op lands. Poll the bundler's own receipt endpoint instead and hand back
+ * the real `transactionHash` once it's included, so every caller downstream
+ * (`contracts.ts`) can keep using plain viem receipt-waiting unmodified.
+ */
+async function waitForUserOpTransactionHash(
+  account: WalletAccountEvmErc4337,
+  userOpHash: string,
+  { intervalMs = 2000, timeoutMs = 60_000 } = {}
+): Promise<`0x${string}`> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const receipt = await account.getUserOperationReceipt(userOpHash);
+    if (receipt) return receipt.receipt.transactionHash as `0x${string}`;
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  throw new Error(`UserOperation ${userOpHash} not included within ${timeoutMs}ms`);
+}
+
+/**
  * Unified wallet surface `lib/contracts.ts` and components drive contract
  * calls through, regardless of wallet mode — see walletMode.ts. `execute()`
  * is the one primitive that matters here: standard mode signs+sends a plain
  * viem transaction; erc4337 mode signs+sends a UserOperation (gas pulled
  * from the smart account's own USD₮ by the paymaster). Both return a real,
- * minable tx/UserOp hash that `waitForTransactionReceipt` can wait on.
+ * minable L1 tx hash that `waitForTransactionReceipt` can wait on (erc4337
+ * via `waitForUserOpTransactionHash` above).
  *
  * Invariant this whole module exists to uphold: `.address` here is the ONE
  * address that gets linked to the account (ensureWallet.ts), displayed
@@ -282,14 +305,14 @@ export async function getWallet(userId: string): Promise<WalletHandle> {
       mode: "erc4337",
       async execute({ to, data, value }) {
         const result = await account.sendTransaction({ to, value: value ?? 0n, data });
-        return result.hash as `0x${string}`;
+        return waitForUserOpTransactionHash(account, result.hash);
       },
       async getUsdtBalance() {
         return account.getTokenBalance(USDT_ADDRESS);
       },
       async transferUsdt(recipient, amount) {
         const result = await account.transfer({ token: USDT_ADDRESS, recipient, amount });
-        return result.hash as `0x${string}`;
+        return waitForUserOpTransactionHash(account, result.hash);
       },
     };
   }
