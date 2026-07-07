@@ -11,3 +11,44 @@ export function isFundingDue(totalRaised: bigint, goal: bigint, deadline: Date, 
 export function mapOnChainStateToDb(state: "Funding" | "Active" | "Closed"): "funding" | "active" | "closed" {
   return state.toLowerCase() as "funding" | "active" | "closed";
 }
+
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { rounds, type Round } from "@/db/schema";
+import { totalRaised, roundState } from "./contracts";
+import { closeFundingSponsored } from "./sponsor";
+
+/**
+ * If `round` is still `funding` and due to close (goal reached or deadline
+ * passed), sends the sponsor-paid `closeFunding()` call. Either way, finishes
+ * by reading the contract's real `state()` and correcting `rounds.status` in
+ * the DB if it's stale — the DB is never trusted, only ever corrected from
+ * on-chain reads.
+ */
+export async function tryCloseFundingIfDue(round: Round): Promise<"funding" | "active" | "closed"> {
+  if (round.status !== "funding") return round.status;
+
+  const address = round.contractAddress as `0x${string}`;
+
+  try {
+    const raised = await totalRaised(address);
+    if (isFundingDue(raised, BigInt(round.goal), round.deadline, new Date())) {
+      await closeFundingSponsored(address);
+    }
+  } catch {
+    // RPC read failed — fall through to the state() read below, which will
+    // also fail and return the existing status unchanged.
+  }
+
+  let onChainStatus: "funding" | "active" | "closed";
+  try {
+    onChainStatus = mapOnChainStateToDb(await roundState(address));
+  } catch {
+    return round.status;
+  }
+
+  if (onChainStatus !== round.status) {
+    await db.update(rounds).set({ status: onChainStatus }).where(eq(rounds.id, round.id));
+  }
+  return onChainStatus;
+}
