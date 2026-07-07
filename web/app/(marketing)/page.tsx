@@ -1,30 +1,20 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { and, eq } from "drizzle-orm";
 import { ArrowRight, ShieldCheck, Repeat, TrendingUp, Trophy } from "lucide-react";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { clubs, rounds } from "@/db/schema";
-import { totalRaised, readSafely } from "@/lib/contracts";
+import { listClubsWithRounds } from "@/lib/clubDirectory";
+import { ClubCard } from "@/components/ClubCard";
 import { formatUsdt, formatBps, formatCapMultiple } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 
-const FEATURED_SLUG = "deportivo-san-martin";
-
-// Illustrative market/club data for the landing — clearly example content, not
-// on-chain reads (the featured card below IS a real verified round).
+// Illustrative market ticker for the landing — clearly example content, not
+// an on-chain read (the featured card below IS real data).
 const LIVE_MARKET = [
   { name: "Sacachispas FC", change: "+12.4%", up: true },
   { name: "Almirante Brown", change: "-2.1%", up: false },
   { name: "Nueva Chicago", change: "+5.8%", up: true },
   { name: "Chacarita Jr.", change: "+22.1%", up: true },
-];
-
-const EXAMPLE_CLUBS = [
-  { name: "Atlético El Porvenir", crest: "/crest-porvenir.jpg", tag: "Revenue share 12%", funded: 82 },
-  { name: "Racing del Norte", crest: null, tag: "Cap 2.0×", funded: 60 },
-  { name: "Estrella Roja FC", crest: null, tag: "Revenue share 9%", funded: 45 },
 ];
 
 function compactUsd(baseUnits: bigint): string {
@@ -38,22 +28,20 @@ function compactUsd(baseUnits: bigint): string {
 
 export default async function Home() {
   const session = await auth.api.getSession({ headers: await headers() });
-  const [club] = await db.select().from(clubs).where(eq(clubs.slug, FEATURED_SLUG));
-  // Only ever surface a *verified* round (see schema.ts) — RoundFactory's
-  // createRound() is permissionless on-chain, so anyone could otherwise POST
-  // a lookalike round under this same club id and have it shown/invested in.
-  const [round] = club
-    ? await db
-        .select()
-        .from(rounds)
-        .where(and(eq(rounds.clubId, club.id), eq(rounds.verified, true)))
-    : [];
-  const raised = round
-    ? await readSafely(() => totalRaised(round.contractAddress as `0x${string}`), 0n)
-    : 0n;
+  const clubs = await listClubsWithRounds();
+  const featured = clubs[0] ?? null;
 
-  const goal = round ? BigInt(round.goal) : 40_000_000000n;
-  const pct = goal > 0n ? Math.min(100, Number((raised * 100n) / goal)) : 0;
+  // No club has a verified round yet — keep today's exact placeholder copy
+  // rather than showing an empty hero.
+  const heroName = featured?.club.name ?? "Deportivo San Martín";
+  const heroInitials = (featured?.club.name ?? "SM").slice(0, 2).toUpperCase();
+  const heroSlug = featured?.club.slug ?? null;
+  const heroRevenueBps = featured ? formatBps(featured.round.revenueBps) : "8.0%";
+  const heroCapMultiple = featured ? formatCapMultiple(featured.round.capMultiple) : "1.50×";
+  const heroGoal = featured ? BigInt(featured.round.goal) : 40_000_000000n;
+  const heroRaised = featured?.raised ?? 0n;
+  const heroPct = featured?.pct ?? 0;
+
   const investHref = session
     ? session.user.role === "club"
       ? "/dashboard"
@@ -80,7 +68,7 @@ export default async function Home() {
             <Link href={investHref} className={buttonVariants({ size: "lg" })}>
               Start investing <ArrowRight className="ml-1 size-4" />
             </Link>
-            <Link href="#clubs" className={buttonVariants({ variant: "outline", size: "lg" })}>
+            <Link href="/clubs" className={buttonVariants({ variant: "outline", size: "lg" })}>
               Browse clubs
             </Link>
           </div>
@@ -93,13 +81,13 @@ export default async function Home() {
           <h2 className="font-display text-3xl uppercase tracking-wide md:text-4xl">
             Featured clubs
           </h2>
-          <Link href="#clubs" className="text-sm font-medium text-primary hover:underline">
+          <Link href="/clubs" className="text-sm font-medium text-primary hover:underline">
             View all teams →
           </Link>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Real verified round, dressed as the hero club card */}
+          {/* Real verified round (or placeholder copy if none exist yet), dressed as the hero club card */}
           <div className="glow relative overflow-hidden rounded-lg border border-border lg:col-span-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -111,11 +99,11 @@ export default async function Home() {
             <div className="relative flex flex-col gap-5 p-6 md:p-8">
               <div className="flex items-center gap-4">
                 <div className="flex size-14 items-center justify-center rounded-lg border border-primary/40 bg-background/60 font-display text-2xl text-primary">
-                  {(club?.name ?? "SM").slice(0, 2).toUpperCase()}
+                  {heroInitials}
                 </div>
                 <div>
                   <h3 className="font-display text-3xl uppercase tracking-wide">
-                    {club?.name ?? "Deportivo San Martín"}
+                    {heroName}
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Next big transfer · 75% probability
@@ -125,10 +113,10 @@ export default async function Home() {
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
-                  { k: "Revenue share", v: round ? formatBps(round.revenueBps) : "8.0%" },
-                  { k: "Cap", v: round ? formatCapMultiple(round.capMultiple) : "1.50×" },
+                  { k: "Revenue share", v: heroRevenueBps },
+                  { k: "Cap", v: heroCapMultiple },
                   { k: "Token price", v: "$1.00" },
-                  { k: "Goal", v: compactUsd(goal) },
+                  { k: "Goal", v: compactUsd(heroGoal) },
                 ].map((s) => (
                   <div key={s.k} className="rounded-lg border border-border bg-background/50 p-3">
                     <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -142,17 +130,17 @@ export default async function Home() {
               <div>
                 <div className="mb-1 flex justify-between text-xs text-muted-foreground">
                   <span>Funding progress</span>
-                  <span>{pct}% funded</span>
+                  <span>{heroPct}% funded</span>
                 </div>
                 <div className="h-3 w-full overflow-hidden rounded-full bg-secondary">
                   <div
                     className="h-full rounded-full bg-primary transition-[width]"
-                    style={{ width: `${pct}%` }}
+                    style={{ width: `${heroPct}%` }}
                   />
                 </div>
                 <div className="mt-1 text-sm">
-                  <span className="font-display text-xl tracking-wide">{formatUsdt(raised)}</span>{" "}
-                  <span className="text-muted-foreground">/ {formatUsdt(goal)} USD₮ raised</span>
+                  <span className="font-display text-xl tracking-wide">{formatUsdt(heroRaised)}</span>{" "}
+                  <span className="text-muted-foreground">/ {formatUsdt(heroGoal)} USD₮ raised</span>
                 </div>
               </div>
 
@@ -162,7 +150,7 @@ export default async function Home() {
               </p>
 
               <Link
-                href={club ? `/club/${club.slug}` : investHref}
+                href={heroSlug ? `/club/${heroSlug}` : investHref}
                 className={cn(buttonVariants({ size: "lg" }), "w-fit")}
               >
                 Invest now
@@ -185,7 +173,7 @@ export default async function Home() {
                 ))}
               </ul>
               <Link
-                href="#clubs"
+                href="/clubs"
                 className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}
               >
                 Open the market
@@ -212,31 +200,14 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Example teams raising now */}
-        <div className="mt-6 grid gap-6 sm:grid-cols-3">
-          {EXAMPLE_CLUBS.map((c) => (
-            <div key={c.name} className="rounded-lg border border-border bg-card p-5">
-              <div className="flex items-center gap-3">
-                {c.crest ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.crest} alt="" className="size-11 rounded-lg object-cover" />
-                ) : (
-                  <div className="flex size-11 items-center justify-center rounded-lg border border-primary/40 bg-background font-display text-lg text-primary">
-                    {c.name.slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <div className="font-display text-lg uppercase tracking-wide">{c.name}</div>
-                  <div className="text-xs text-primary">{c.tag}</div>
-                </div>
-              </div>
-              <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-secondary">
-                <div className="h-full rounded-full bg-primary" style={{ width: `${c.funded}%` }} />
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">{c.funded}% funded</div>
-            </div>
-          ))}
-        </div>
+        {/* Real clubs raising now (excludes the featured one above) */}
+        {clubs.slice(1, 4).length > 0 && (
+          <div className="mt-6 grid gap-6 sm:grid-cols-3">
+            {clubs.slice(1, 4).map((c) => (
+              <ClubCard key={c.club.id} {...c} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ── Why La Doce ─────────────────────────────────────── */}
