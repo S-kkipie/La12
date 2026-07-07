@@ -48,14 +48,14 @@ export async function closeFundingSponsored(roundAddress: `0x${string}`): Promis
   const pk = process.env.SPONSOR_PK;
   if (!pk) return;
 
-  const account = privateKeyToAccount(pk as `0x${string}`);
-  const walletClient = createWalletClient({ account, chain: activeChain, transport: http(RPC_URL) });
-  const data = encodeFunctionData({ abi: revenueShareRoundAbi, functionName: "closeFunding" });
-
   try {
+    const account = privateKeyToAccount(pk as `0x${string}`);
+    const walletClient = createWalletClient({ account, chain: activeChain, transport: http(RPC_URL) });
+    const data = encodeFunctionData({ abi: revenueShareRoundAbi, functionName: "closeFunding" });
     const hash = await walletClient.sendTransaction({ to: roundAddress, data });
     await publicClient.waitForTransactionReceipt({ hash });
   } catch {
     // Not due yet, or another concurrent trigger already closed it — ignore.
+    // Also swallows errors from malformed SPONSOR_PK.
   }
 }
