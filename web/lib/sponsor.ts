@@ -3,9 +3,10 @@
 // The relayer only ever sends its own ETH — it never touches the fan's key,
 // so self-custody stays intact. Server-only; SPONSOR_PK must never reach the
 // client bundle.
-import { createWalletClient, http } from "viem";
+import { createWalletClient, encodeFunctionData, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { activeChain } from "./chain";
+import { publicClient, revenueShareRoundAbi } from "./contracts";
 
 const RPC_URL =
   process.env.RPC_URL ?? process.env.NEXT_PUBLIC_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
@@ -33,4 +34,28 @@ export async function fundGas(recipient: `0x${string}`): Promise<FundGasResult> 
   });
 
   return { hash };
+}
+
+/**
+ * Calls `closeFunding()` on `roundAddress`, paid by the sponsor relayer.
+ * `closeFunding()` has no access control on-chain — the sponsor is acting as
+ * "anyone", the same way a fan or the club themselves could call it directly.
+ * Swallows failures (already closed by a concurrent trigger, or SPONSOR_PK
+ * not configured) — the caller always re-reads the contract's real `state()`
+ * afterward regardless of whether this call succeeded.
+ */
+export async function closeFundingSponsored(roundAddress: `0x${string}`): Promise<void> {
+  const pk = process.env.SPONSOR_PK;
+  if (!pk) return;
+
+  const account = privateKeyToAccount(pk as `0x${string}`);
+  const walletClient = createWalletClient({ account, chain: activeChain, transport: http(RPC_URL) });
+  const data = encodeFunctionData({ abi: revenueShareRoundAbi, functionName: "closeFunding" });
+
+  try {
+    const hash = await walletClient.sendTransaction({ to: roundAddress, data });
+    await publicClient.waitForTransactionReceipt({ hash });
+  } catch {
+    // Not due yet, or another concurrent trigger already closed it — ignore.
+  }
 }
