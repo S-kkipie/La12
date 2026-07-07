@@ -48,7 +48,12 @@ export async function tryCloseFundingIfDue(round: Round): Promise<"funding" | "a
   }
 
   if (onChainStatus !== round.status) {
-    await db.update(rounds).set({ status: onChainStatus }).where(eq(rounds.id, round.id));
+    try {
+      await db.update(rounds).set({ status: onChainStatus }).where(eq(rounds.id, round.id));
+    } catch {
+      // DB write failed — stale status persists but caller still gets the correct
+      // on-chain truth; the DB will be corrected on the next successful check.
+    }
   }
   return onChainStatus;
 }
