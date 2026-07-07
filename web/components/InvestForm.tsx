@@ -13,11 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 type Props = {
+  roundId: number;
   roundAddress: `0x${string}`;
   onInvested?: (hash: `0x${string}`) => void;
 };
 
-export function InvestForm({ roundAddress, onInvested }: Props) {
+export function InvestForm({ roundId, roundAddress, onInvested }: Props) {
   const { userId } = useCurrentUserId();
   const [amount, setAmount] = useState("10");
   const [status, setStatus] = useState<"idle" | "pending" | "done">("idle");
@@ -41,6 +42,11 @@ export function InvestForm({ roundAddress, onInvested }: Props) {
 
       toast.loading("Investing…", { id: toastId });
       const hash = await invest(wallet, roundAddress, value);
+
+      // Best-effort: if this investment crossed the goal, close funding now
+      // so the club receives the raised USD₮ immediately. A failure here
+      // never blocks the fan's own successful investment.
+      fetch(`/api/rounds/${roundId}/close-check`, { method: "POST" }).catch(() => {});
 
       toast.success("Investment confirmed!", { id: toastId });
       setStatus("done");
