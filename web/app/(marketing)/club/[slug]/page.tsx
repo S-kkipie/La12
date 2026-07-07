@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { clubs, rounds } from "@/db/schema";
 import { totalRaised, readSafely } from "@/lib/contracts";
+import { tryCloseFundingIfDue } from "@/lib/closeFunding";
 import { RoundProgress } from "@/components/RoundProgress";
 import { InvestForm } from "@/components/InvestForm";
 
@@ -28,6 +29,11 @@ export default async function ClubPage({ params }: Props) {
     .select()
     .from(rounds)
     .where(and(eq(rounds.clubId, club.id), eq(rounds.verified, true)));
+  let status = round?.status;
+  if (round && round.status === "funding" && round.deadline.getTime() < Date.now()) {
+    status = await tryCloseFundingIfDue(round);
+  }
+
   const raised = round
     ? await readSafely(() => totalRaised(round.contractAddress as `0x${string}`), 0n)
     : 0n;
@@ -49,10 +55,10 @@ export default async function ClubPage({ params }: Props) {
             capMultiple={round.capMultiple}
             revenueBps={round.revenueBps}
             deadline={round.deadline}
-            status={round.status}
+            status={status ?? round.status}
           />
           {session ? (
-            <InvestForm roundAddress={round.contractAddress as `0x${string}`} />
+            <InvestForm roundId={round.id} roundAddress={round.contractAddress as `0x${string}`} />
           ) : (
             <div className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
               <Link href="/auth/sign-in" className="font-medium text-primary hover:underline">
