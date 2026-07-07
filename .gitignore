@@ -36,3 +36,6 @@ contracts/lib/
 
 # SDD execution ledger (scratch)
 .superpowers/
+
+# git worktrees (scratch)
+.worktrees/
