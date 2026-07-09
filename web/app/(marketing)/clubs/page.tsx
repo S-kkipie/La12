@@ -4,6 +4,8 @@ import { ClubCard } from "@/components/ClubCard";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function ClubsPage() {
   const clubs = await listClubsWithRounds();
 
