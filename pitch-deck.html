@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La Doce — Pitch</title>
+<style>
+  :root {
+    /* floodlit-night (default) */
+    --bg: #0A130E;
+    --panel: #0C1712;
+    --panel-lift: #10201A;
+    --fg: #EAF1E9;
+    --fg-muted: #8CA598;
+    --line: rgba(232,246,236,0.13);
+    --line-strong: rgba(232,246,236,0.26);
+    --turf: #2BB673;
+    --turf-solid-ink: #04231A;
+    --flood: #F5B63D;
+    --figure: #78E4AC;
+    --stroke: rgba(234,241,233,0.34);
+    --card: rgba(255,255,255,0.03);
+    --card-border: rgba(232,246,236,0.10);
+
+    --font-display: 'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue', Arial, sans-serif;
+    --font-poster: Impact, 'Haettenschweiler', 'Franklin Gothic Bold', 'Arial Narrow Bold', var(--font-display);
+    --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+    --maxw: 1080px;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #ECF1E8;
+      --panel: #F3F7F0;
+      --panel-lift: #E5ECE1;
+      --fg: #0B1610;
+      --fg-muted: #47604F;
+      --line: rgba(11,22,16,0.14);
+      --line-strong: rgba(11,22,16,0.28);
+      --turf: #14915A;
+      --figure: #0B6A43;
+      --flood: #C9871A;
+      --stroke: rgba(11,22,16,0.42);
+      --card: rgba(11,22,16,0.025);
+      --card-border: rgba(11,22,16,0.10);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #ECF1E8;
+    --panel: #F3F7F0;
+    --panel-lift: #E5ECE1;
+    --fg: #0B1610;
+    --fg-muted: #47604F;
+    --line: rgba(11,22,16,0.14);
+    --line-strong: rgba(11,22,16,0.28);
+    --turf: #14915A;
+    --figure: #0B6A43;
+    --flood: #C9871A;
+    --stroke: rgba(11,22,16,0.42);
+    --card: rgba(11,22,16,0.025);
+    --card-border: rgba(11,22,16,0.10);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0A130E;
+    --panel: #0C1712;
+    --panel-lift: #10201A;
+    --fg: #EAF1E9;
+    --fg-muted: #8CA598;
+    --line: rgba(232,246,236,0.13);
+    --line-strong: rgba(232,246,236,0.26);
+    --turf: #2BB673;
+    --figure: #78E4AC;
+    --flood: #F5B63D;
+    --stroke: rgba(234,241,233,0.34);
+    --card: rgba(255,255,255,0.03);
+    --card-border: rgba(232,246,236,0.10);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  img { max-width: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: clamp(16px, 1.05vw, 18px);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    scroll-snap-type: y proximity;
+    overflow-x: hidden;
+  }
+
+  /* progress rail */
+  .rail { position: fixed; inset: 0 auto 0 0; width: 3px; z-index: 40; background: transparent; }
+  .rail__fill { position: absolute; top: 0; left: 0; width: 100%; height: 0%; background: var(--turf); transition: height .12s linear; }
+
+  /* theme toggle */
+  .themebtn {
+    position: fixed; top: 1rem; right: 1rem; z-index: 50;
+    font-family: var(--font-mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--fg); background: color-mix(in srgb, var(--bg) 78%, transparent);
+    border: 1px solid var(--line-strong); border-radius: 999px; padding: .45rem .8rem; cursor: pointer;
+    backdrop-filter: blur(6px); transition: border-color .18s ease, color .18s ease;
+  }
+  .themebtn:hover { border-color: var(--turf); color: var(--turf); }
+
+  .panel {
+    position: relative; min-height: 100vh; scroll-snap-align: start;
+    display: flex; align-items: center;
+    padding: clamp(3.5rem, 7vh, 6rem) clamp(1.5rem, 5vw, 4rem);
+    border-bottom: 1px solid var(--line); overflow: hidden;
+  }
+  .panel--lift { background: var(--panel-lift); }
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; position: relative; z-index: 2; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: .6rem;
+    font-family: var(--font-mono); font-size: .72rem; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--fg-muted); margin: 0 0 1.4rem;
+  }
+  .tag {
+    display: inline-flex; align-items: baseline; gap: .4rem;
+    font-family: var(--font-poster); color: var(--turf); font-size: .78rem; letter-spacing: .12em;
+    border: 1px solid var(--turf); border-radius: 2px; padding: .18rem .5rem;
+  }
+  .tag b { font-size: 1.05rem; }
+
+  h1, h2, h3 { margin: 0; text-wrap: balance; font-weight: 700; }
+  .display { font-family: var(--font-display); text-transform: uppercase; font-weight: 700; letter-spacing: -0.01em; line-height: 0.92; }
+  h2.display { font-size: clamp(2.1rem, 5.2vw, 3.6rem); margin-bottom: 1.3rem; }
+  h3 { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .01em; font-size: 1.35rem; line-height: 1.05; }
+
+  p { margin: 0 0 1rem; max-width: 40em; }
+  .lead { font-size: clamp(1.15rem, 1.8vw, 1.42rem); color: var(--fg); max-width: 34em; }
+  .muted { color: var(--fg-muted); }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  strong.hl { color: var(--turf); font-weight: 700; }
+  strong.hlf { color: var(--flood); font-weight: 700; }
+
+  /* HERO */
+  .hero { text-align: left; }
+  .hero .pitch { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .glow {
+    position: absolute; top: -18%; left: 50%; transform: translateX(-50%);
+    width: 90vw; height: 60vh;
+    background: radial-gradient(ellipse at center, color-mix(in srgb, var(--flood) 26%, transparent), transparent 62%);
+    opacity: .5; filter: blur(6px);
+  }
+  .circle { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: min(78vh, 720px); aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--line); opacity: .8; }
+  .halfway { position: absolute; top: 0; bottom: 0; left: 50%; width: 1.5px; background: var(--line); }
+  .spot { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%,-50%); background: var(--line-strong); }
+
+  .hero__grid { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr auto; gap: 2rem; align-items: center; }
+  .jersey {
+    font-family: var(--font-poster); font-size: clamp(9rem, 26vw, 22rem); line-height: .8;
+    color: transparent; -webkit-text-stroke: 2px var(--stroke); letter-spacing: -0.04em; text-align: right; justify-self: end;
+  }
+  .wordmark { font-size: clamp(3.2rem, 11vw, 8rem); }
+  .wordmark .doce { color: var(--turf); }
+  .thesis { margin-top: 1.6rem; font-size: clamp(1.15rem, 2vw, 1.5rem); max-width: 30em; }
+  .kicker { margin-top: .8rem; color: var(--fg-muted); max-width: 34em; }
+
+  .metastrip {
+    margin-top: 2.6rem; display: flex; flex-wrap: wrap; gap: 1.6rem 2.2rem;
+    font-family: var(--font-mono); font-size: .82rem; letter-spacing: .04em;
+    padding-top: 1.4rem; border-top: 1px solid var(--line);
+  }
+  .metastrip span { color: var(--fg-muted); }
+  .metastrip b { color: var(--fg); font-weight: 600; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.4rem, 3vw, 3rem); align-items: start; }
+  .cards { display: grid; gap: 1rem; grid-template-columns: repeat(2, 1fr); margin-top: 1.6rem; }
+  .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 4px; padding: 1.3rem 1.3rem 1.4rem; transition: transform .18s ease, border-color .18s ease; }
+  .card:hover { transform: translateY(-3px); border-color: var(--turf); }
+  .card h3 { margin-bottom: .5rem; }
+  .card p { font-size: .96rem; margin-bottom: 0; color: var(--fg-muted); }
+  .card .num { font-family: var(--font-mono); color: var(--turf); font-size: .78rem; letter-spacing: .1em; display:block; margin-bottom:.6rem; }
+
+  .termsheet { border: 1px solid var(--line-strong); border-radius: 5px; overflow: hidden; }
+  .termsheet .row { display: flex; justify-content: space-between; gap: 1rem; padding: .95rem 1.2rem; border-bottom: 1px solid var(--line); }
+  .termsheet .row:last-child { border-bottom: 0; }
+  .termsheet .k { color: var(--fg-muted); font-family: var(--font-mono); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; align-self:center; }
+  .termsheet .v { font-family: var(--font-poster); font-size: 1.5rem; color: var(--fg); }
+  .termsheet .v.turf { color: var(--turf); }
+  .termsheet .v.flood { color: var(--flood); }
+
+  .panel--turf { background: var(--turf); color: var(--turf-solid-ink); border-bottom-color: transparent; }
+  .panel--turf .eyebrow, .panel--turf .muted { color: color-mix(in srgb, var(--turf-solid-ink) 68%, transparent); }
+  .panel--turf .tag { color: var(--turf-solid-ink); border-color: color-mix(in srgb, var(--turf-solid-ink) 45%, transparent); }
+  .panel--turf strong.hl { color: var(--turf-solid-ink); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--turf-solid-ink) 40%, transparent); text-underline-offset: 3px; }
+  .wow { font-family: var(--font-display); text-transform: uppercase; font-weight: 700; font-size: clamp(1.8rem, 4.4vw, 3.2rem); line-height: 1.02; max-width: 15em; }
+  .wow .b { display:block; }
+
+  .status { margin-top: 1.6rem; display: grid; gap: 0; border-top: 1px solid var(--line); }
+  .status .item { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; padding: .85rem .2rem; border-bottom: 1px solid var(--line); }
+  .status .item span { font-size: 1rem; }
+  .pill { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; padding: .2rem .55rem; border-radius: 999px; white-space: nowrap; }
+  .pill.done { color: var(--turf); border: 1px solid var(--turf); }
+  .pill.wip { color: var(--flood); border: 1px solid var(--flood); }
+  .newbadge { font-family: var(--font-mono); font-size: .6rem; letter-spacing:.12em; color: var(--flood); border:1px solid var(--flood); border-radius: 2px; padding: 0 .3rem; margin-left:.5rem; vertical-align: middle; text-transform: uppercase; }
+
+  .bigstat { font-family: var(--font-poster); font-size: clamp(3rem, 9vw, 6rem); line-height: .9; color: var(--turf); }
+  .close .wordmark { margin-bottom: 1rem; }
+  .links { margin-top: 2rem; display: flex; flex-wrap: wrap; gap: .8rem; }
+  .links a { font-family: var(--font-mono); font-size: .85rem; letter-spacing: .04em; color: var(--fg); text-decoration: none; border: 1px solid var(--line-strong); border-radius: 3px; padding: .6rem 1rem; transition: border-color .18s ease, color .18s ease; }
+  .links a:hover { border-color: var(--turf); color: var(--turf); }
+
+  a:focus-visible, .card:focus-visible, .themebtn:focus-visible { outline: 2px solid var(--turf); outline-offset: 3px; }
+
+  [data-reveal] { opacity: 0; transform: translateY(18px); transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1); }
+  [data-reveal].in { opacity: 1; transform: none; }
+  [data-reveal][data-d="1"] { transition-delay: .08s; }
+  [data-reveal][data-d="2"] { transition-delay: .16s; }
+  [data-reveal][data-d="3"] { transition-delay: .24s; }
+
+  @media (max-width: 760px) {
+    .two, .cards { grid-template-columns: 1fr; }
+    .hero__grid { grid-template-columns: 1fr; }
+    .jersey { justify-self: start; text-align: left; font-size: clamp(7rem, 40vw, 12rem); }
+    .status .item { grid-template-columns: 1fr; gap: .3rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal] { opacity: 1 !important; transform: none !important; transition: none; }
+    .rail__fill, .card { transition: none; }
+  }
+
+  /* PDF / print — one 16:9 slide per page, floodlit-night look forced, desktop layout kept */
+  @page { size: 1280px 720px; margin: 0; }
+  @media print {
+    :root {
+      --bg: #0A130E; --panel: #0C1712; --panel-lift: #10201A;
+      --fg: #EAF1E9; --fg-muted: #8CA598;
+      --line: rgba(232,246,236,0.13); --line-strong: rgba(232,246,236,0.26);
+      --turf: #2BB673; --figure: #78E4AC; --flood: #F5B63D;
+      --stroke: rgba(234,241,233,0.34);
+      --card: rgba(255,255,255,0.03); --card-border: rgba(232,246,236,0.10);
+    }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    html, body { background: var(--bg); overflow: visible; scroll-snap-type: none; }
+    .rail, .themebtn { display: none !important; }
+    [data-reveal] { opacity: 1 !important; transform: none !important; }
+    /* keep desktop multi-column layout regardless of chrome's print viewport width */
+    .two, .cards { grid-template-columns: 1fr 1fr !important; }
+    .hero__grid { grid-template-columns: 1fr auto !important; }
+    .status .item { grid-template-columns: 1fr auto !important; }
+    .jersey { justify-self: end !important; text-align: right !important; }
+    .panel {
+      width: 1280px; height: 720px; min-height: 0; overflow: hidden;
+      border-bottom: none; padding: 3rem clamp(2.5rem, 4vw, 4rem);
+    }
+    .panel h2.display { margin-bottom: 1rem; }
+    .status { margin-top: 1.1rem; }
+    .status .item { padding: .6rem .2rem; }
+    .status .item span { font-size: .92rem; }
+    .card:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="rail" aria-hidden="true"><div class="rail__fill" id="railfill"></div></div>
+  <button class="themebtn" id="themebtn" type="button" aria-label="Toggle theme">Theme</button>
+
+  <!-- COVER -->
+  <section class="panel hero" id="cover">
+    <div class="pitch" aria-hidden="true">
+      <div class="glow"></div>
+      <div class="circle"></div>
+      <div class="halfway"></div>
+      <div class="spot"></div>
+    </div>
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>Tether WDK Cup 2026 · Football track · Deadline Jul 14</p>
+      <div class="hero__grid">
+        <div>
+          <h1 class="display wordmark" data-reveal data-d="1">La <span class="doce">Doce</span></h1>
+          <p class="thesis" data-reveal data-d="2">Own a piece of your club's revenue. <strong class="hl">Invest in USD₮, get paid in USD₮</strong>, hold your own keys.</p>
+          <p class="kicker" data-reveal data-d="3">The 12th player isn't in the stands anymore — they're on the cap table.</p>
+        </div>
+        <div class="jersey" data-reveal data-d="2" aria-hidden="true">12</div>
+      </div>
+      <div class="metastrip" data-reveal data-d="3">
+        <span><b>Self-custody</b> — platform holds nothing</span>
+        <span><b>30/30</b> contract tests, hardened</span>
+        <span><b>USD₮</b>-native end to end</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="panel" id="problem">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal><span class="tag"><b>01</b></span> The problem — with real money</p>
+      <h2 class="display" data-reveal data-d="1">Banks skip the barrio club.<br>Fans have no way in.</h2>
+      <div class="two">
+        <div data-reveal data-d="2">
+          <p>Small football clubs — second division, regional cups, neighborhood sides — are <strong class="hl">real businesses</strong>: gate takings, merch, fiercely loyal fans, room to grow.</p>
+          <p class="muted">But nobody lends them capital. The bank won't touch the neighborhood club; all that's left is expensive loan sharks.</p>
+        </div>
+        <div data-reveal data-d="3">
+          <p>On the other side: thousands of fans who want to back their club — and win alongside it.</p>
+          <p class="muted">There has never been an instrument to cross that gap. A huge void between the club and its people.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUTION -->
+  <section class="panel panel--lift" id="solution">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal><span class="tag"><b>02</b></span> The solution</p>
+      <h2 class="display" data-reveal data-d="1">Tokenized revenue-share</h2>
+      <div class="two">
+        <div data-reveal data-d="2">
+          <p>A club raises capital in USD₮ and, in return, pays out a <strong class="hl">% of a visible income stream</strong> — the gate — for N months, up to a cap multiple.</p>
+          <p>The fan invests USD₮, receives an <strong class="hl">ERC-20 token = their stake</strong>, and claims their share of every payout — all in their self-custody wallet. No bank. No intermediary. The platform never custodies a cent.</p>
+        </div>
+        <div data-reveal data-d="3">
+          <div class="card" style="background:transparent;border-color:var(--flood)">
+            <span class="num" style="color:var(--flood)">The cold-start killer</span>
+            <p style="color:var(--fg);font-size:1.05rem">The bank won't back the barrio club — <strong class="hlf">the fan will.</strong> They invest for love <em>and</em> return. That kills the trust problem that sinks every new marketplace.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXAMPLE -->
+  <section class="panel" id="example">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal><span class="tag"><b>03</b></span> Worked example — floodlights</p>
+      <div class="two">
+        <div data-reveal data-d="1">
+          <h2 class="display">Deportivo<br>San Martín</h2>
+          <p class="muted">Needs capital for stadium floodlights. Issues a revenue-share round; 400 fans chip in ~USD₮ 100 each and get paid every matchday — automatically, in USD₮.</p>
+        </div>
+        <div class="termsheet" data-reveal data-d="2">
+          <div class="row"><span class="k">Raising</span><span class="v turf mono">USD₮ 40,000</span></div>
+          <div class="row"><span class="k">Revenue share</span><span class="v flood mono">8% of gate</span></div>
+          <div class="row"><span class="k">Cap multiple</span><span class="v mono">1.5×</span></div>
+          <div class="row"><span class="k">Backers</span><span class="v mono">~400 fans</span></div>
+          <div class="row"><span class="k">Payout</span><span class="v mono" style="font-size:1.1rem">every matchday</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="panel panel--lift" id="how">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal><span class="tag"><b>04</b></span> How it works — the demo</p>
+      <h2 class="display" data-reveal data-d="1">Two accounts, one loop</h2>
+      <div class="cards">
+        <div class="card" data-reveal data-d="1">
+          <span class="num">The fan</span>
+          <h3>Invest &amp; get paid</h3>
+          <p>Sign up → an embedded WDK wallet creates itself (Yape-style, no seed in your face) → fund USD₮ → invest in a club's round → hold the ERC-20 share → claim payouts → withdraw. The keys are always yours.</p>
+        </div>
+        <div class="card" data-reveal data-d="2">
+          <span class="num">The club</span>
+          <h3>Raise &amp; distribute</h3>
+          <p>Sign up → collection wallet → publish a round (goal, %, cap, deadline). When the goal fills, the capital arrives. Push a distribution when the gate money lands.</p>
+        </div>
+      </div>
+      <p class="muted" data-reveal data-d="3" style="margin-top:1.6rem">The contract — <span class="mono">RevenueShareRound</span> — is an ERC-20 share with a claim-based dividend accumulator: gas-safe with any number of holders, <strong class="hl">30/30 tests, adversarially hardened</strong>.</p>
+    </div>
+  </section>
+
+  <!-- WOW MOMENT -->
+  <section class="panel panel--turf" id="wow">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>The wow moment</p>
+      <p class="wow" data-reveal data-d="1">
+        <span class="b">Club distributes revenue.</span>
+        <span class="b">Contract withholds the agreed %</span>
+        <span class="b">and splits it pro-rata to holders —</span>
+        <span class="b"><strong class="hl">automatically, on-chain.</strong></span>
+      </p>
+      <p data-reveal data-d="2" style="margin-top:1.6rem;font-size:1.2rem;max-width:32em">USD₮ lands in the fan's wallet. No oracle. No trust. Everything on-chain, everything in USD₮.</p>
+    </div>
+  </section>
+
+  <!-- AUTOMATIC BY DESIGN -->
+  <section class="panel" id="automatic">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal><span class="tag"><b>05</b></span> Automatic by design <span class="newbadge">new</span></p>
+      <h2 class="display" data-reveal data-d="1">Nobody flips a switch</h2>
+      <div class="cards">
+        <div class="card" data-reveal data-d="1">
+          <span class="num">Auto-close funding</span>
+          <h3>Goal hit → capital sweeps</h3>
+          <p>The moment a round reaches its goal (or its deadline passes), the raised USD₮ sweeps to the club <strong class="hl">on-chain</strong> — a permissionless call, sponsor-paid, no admin required. The database is corrected from the contract's real state, never trusted.</p>
+        </div>
+        <div class="card" data-reveal data-d="2">
+          <span class="num">Club discovery</span>
+          <h3>Browse clubs raising now</h3>
+          <p>A homepage and a <span class="mono">/clubs</span> directory surface every club currently raising. Pick one, open the round, invest in a tap. The marketplace has a front door.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY WDK -->
+  <section class="panel panel--lift" id="wdk">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal><span class="tag"><b>06</b></span> Why WDK — the criterion that matters most</p>
+      <h2 class="display" data-reveal data-d="1">La Doce <em>is</em> money movement.<br>WDK is the money layer.</h2>
+      <div class="cards">
+        <div class="card" data-reveal data-d="1"><h3>Self-custody, no crypto infra</h3><p>Kills regulatory risk — we custody nothing.</p></div>
+        <div class="card" data-reveal data-d="2"><h3>Yape-style UX</h3><p>Embedded wallet, no seed, no friction. A barrio fan invests without knowing what a blockchain is.</p></div>
+        <div class="card" data-reveal data-d="1"><h3>USD₮ as the unit of account</h3><p>Funding, payout, withdrawal — all in USD₮.</p></div>
+        <div class="card" data-reveal data-d="2"><h3>Gas in USD₮, zero ETH</h3><p>ERC-4337 paymaster (WDK). "The fan never touches another coin" is the production config, not a slogan.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATUS -->
+  <section class="panel" id="status">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal><span class="tag"><b>07</b></span> What's built — no smoke</p>
+      <h2 class="display" data-reveal data-d="1">Shipped, not slideware</h2>
+      <div class="status" data-reveal data-d="2">
+        <div class="item"><span>Revenue-share contract (Foundry + OpenZeppelin) — 30/30 tests, adversarially hardened</span><span class="pill done">✓ done</span></div>
+        <div class="item"><span>Web SaaS (Next.js) — club + fan accounts, server-gated roles (Better Auth)</span><span class="pill done">✓ done</span></div>
+        <div class="item"><span>WDK self-custody wallet — seed encrypted (AES-GCM) in-browser, per user</span><span class="pill done">✓ done</span></div>
+        <div class="item"><span>Loop invest → distribute → claim — tested end-to-end on local chain (anvil)</span><span class="pill done">✓ done</span></div>
+        <div class="item"><span>Auto-close funding — goal hit sweeps capital to club, status self-corrects <span class="newbadge">new</span></span><span class="pill done">✓ done</span></div>
+        <div class="item"><span>Club discovery — homepage + <span class="mono">/clubs</span> directory <span class="newbadge">new</span></span><span class="pill done">✓ done</span></div>
+        <div class="item"><span>Dual-mode wallet (standard + ERC-4337 gasless) — code + reviewed; contracts on Sepolia</span><span class="pill done">✓ done</span></div>
+        <div class="item"><span>Test faucets (USD₮ + gas) — run it with no real money</span><span class="pill done">✓ done</span></div>
+        <div class="item"><span>Live gasless on Sepolia (gas paid in token) — pending Candide provisioning</span><span class="pill wip">◷ pending</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RISK -->
+  <section class="panel panel--lift" id="risk">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal><span class="tag"><b>08</b></span> Risk #1 — we name it before the judge does</p>
+      <h2 class="display" data-reveal data-d="1">Revenue-share, not equity</h2>
+      <div class="two">
+        <div data-reveal data-d="2">
+          <p>Issuing "shares" means stepping into securities regulation. So we start with <strong class="hl">revenue-share / economic rights</strong> — a light, non-custodial instrument — plus <strong class="hl">self-custody</strong>: the user holds their keys, the platform holds no funds.</p>
+        </div>
+        <div data-reveal data-d="3">
+          <div class="card" style="border-color:var(--flood)">
+            <span class="num" style="color:var(--flood)">Precedent not to repeat</span>
+            <p style="color:var(--fg)"><strong class="hlf">Football Index</strong> collapsed as opaque gambling with no real ownership. Us: on-chain ownership, transparent, self-custody.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISION -->
+  <section class="panel" id="vision">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal><span class="tag"><b>09</b></span> The long game</p>
+      <h2 class="display" data-reveal data-d="1">Start with football.<br>Scale to LATAM's private market.</h2>
+      <div class="two">
+        <div data-reveal data-d="2">
+          <p>Football is the beachhead: clubs are small businesses with <strong class="hl">emotionally committed fans</strong>. The same engine works for any private company in Peru and Latin America.</p>
+          <p class="muted">A digital private market where any business raises capital and anyone invests from small tickets. Blockchain invisible; dividends in USD₮.</p>
+        </div>
+        <div data-reveal data-d="3">
+          <p class="bigstat">P2P</p>
+          <p>The ERC-20 share already opens the door to a <strong class="hl">secondary market</strong> — liquidity for holders — with no contract rewrite.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLOSE -->
+  <section class="panel close panel--turf" id="close">
+    <div class="wrap">
+      <h2 class="display wordmark" data-reveal>La Doce</h2>
+      <p class="wow" data-reveal data-d="1" style="max-width:20em">The 12th player is on the cap table.</p>
+      <div class="links" data-reveal data-d="2">
+        <a href="https://github.com/S-kkipie/La12" target="_blank" rel="noopener">github.com/S-kkipie/La12</a>
+        <a href="#cover">License: MIT</a>
+        <a href="#cover">Tether WDK Cup 2026</a>
+      </div>
+    </div>
+  </section>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // optional forced theme via ?theme=dark|light (handy for sharing/exports)
+    var forced = new URLSearchParams(location.search).get('theme');
+    if (forced === 'light' || forced === 'dark') root.setAttribute('data-theme', forced);
+
+    // reveals
+    var els = Array.prototype.slice.call(document.querySelectorAll('[data-reveal]'));
+    if (reduce || !('IntersectionObserver' in window)) {
+      els.forEach(function (el) { el.classList.add('in'); });
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, { threshold: 0.16 });
+      els.forEach(function (el) { io.observe(el); });
+    }
+
+    // progress rail
+    var fill = document.getElementById('railfill');
+    function onScroll() {
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      var p = h > 0 ? (window.scrollY / h) * 100 : 0;
+      fill.style.height = p + '%';
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    // theme toggle: cycles through auto -> light -> dark -> auto
+    var btn = document.getElementById('themebtn');
+    function current() { return root.getAttribute('data-theme') || 'auto'; }
+    function label() {
+      var c = current();
+      btn.textContent = c === 'auto' ? 'Theme · Auto' : (c === 'light' ? 'Theme · Light' : 'Theme · Dark');
+    }
+    btn.addEventListener('click', function () {
+      var c = current();
+      var next = c === 'auto' ? 'light' : (c === 'light' ? 'dark' : 'auto');
+      if (next === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', next);
+      label();
+    });
+    label();
+  })();
+</script>
+</body>
+</html>
