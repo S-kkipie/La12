@@ -12,6 +12,7 @@ import { ClubHero } from "./ClubHero";
 import { RevenueChart } from "./RevenueChart";
 import { ClubRoundsList } from "./ClubRoundsList";
 import { DistributeDialog } from "./DistributeDialog";
+import { CloseRoundDialog } from "./CloseRoundDialog";
 import { HoldersDialog } from "./HoldersDialog";
 import { CreateRoundDialog } from "./CreateRoundDialog";
 import { Card } from "@/components/ui/card";
@@ -35,6 +36,7 @@ export function ClubOverview({
 
   const [distributeRound, setDistributeRound] = useState<ClubRoundView | null>(null);
   const [holdersRound, setHoldersRound] = useState<ClubRoundView | null>(null);
+  const [closeRoundTarget, setCloseRoundTarget] = useState<ClubRoundView | null>(null);
   const [createOpen, setCreateOpen] = useState(searchParams.get("action") === "newRound");
 
   const handleNewRound = useCallback(() => {
@@ -92,6 +94,7 @@ export function ClubOverview({
           rounds={rounds}
           onDistribute={setDistributeRound}
           onHolders={setHoldersRound}
+          onCloseRound={setCloseRoundTarget}
           onNewRound={handleNewRound}
         />
       </div>
@@ -102,6 +105,14 @@ export function ClubOverview({
           onOpenChange={(v) => setDistributeRound(v ? distributeRound : null)}
           round={distributeRound}
           onDistributed={refresh}
+        />
+      )}
+      {closeRoundTarget && (
+        <CloseRoundDialog
+          open={closeRoundTarget !== null}
+          onOpenChange={(v) => setCloseRoundTarget(v ? closeRoundTarget : null)}
+          round={closeRoundTarget}
+          onClosed={refresh}
         />
       )}
       {holdersRound && (

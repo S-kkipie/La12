@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCurrentUserId } from "@/lib/auth-client";
 import { createWallet, getWallet } from "@/lib/wdk";
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export function InvestForm({ roundId, roundAddress, onInvested }: Props) {
+  const router = useRouter();
   const { userId } = useCurrentUserId();
   const [amount, setAmount] = useState("10");
   const [status, setStatus] = useState<"idle" | "pending" | "done">("idle");
@@ -51,6 +53,7 @@ export function InvestForm({ roundId, roundAddress, onInvested }: Props) {
       toast.success("Investment confirmed!", { id: toastId });
       setStatus("done");
       onInvested?.(hash);
+      router.refresh();
     } catch (err) {
       setStatus("idle");
       toast.error(friendlyError(err), { id: toastId });

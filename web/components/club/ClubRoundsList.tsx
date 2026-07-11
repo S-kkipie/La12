@@ -9,11 +9,13 @@ export function ClubRoundsList({
   rounds,
   onDistribute,
   onHolders,
+  onCloseRound,
   onNewRound,
 }: {
   rounds: ClubRoundView[];
   onDistribute: (r: ClubRoundView) => void;
   onHolders: (r: ClubRoundView) => void;
+  onCloseRound: (r: ClubRoundView) => void;
   onNewRound: () => void;
 }) {
   if (rounds.length === 0) {
@@ -34,6 +36,9 @@ export function ClubRoundsList({
             <div className="flex gap-2">
               <Button size="sm" onClick={() => onDistribute(r)} disabled={!canDistribute}>Distribute</Button>
               <Button size="sm" variant="outline" onClick={() => onHolders(r)}>Holders</Button>
+              {r.status === "active" && (
+                <Button size="sm" variant="destructive" onClick={() => onCloseRound(r)}>Close round</Button>
+              )}
             </div>
           </div>
         );

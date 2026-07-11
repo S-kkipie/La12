@@ -170,6 +170,14 @@ export async function distribute(wallet: WalletHandle, roundAddress: `0x${string
   return hash;
 }
 
+/** Club-only: retires the round (Active -> Closed). See RevenueShareRound.closeRound. */
+export async function closeRound(wallet: WalletHandle, roundAddress: `0x${string}`) {
+  const data = encodeFunctionData({ abi: revenueShareRoundAbi, functionName: "closeRound" });
+  const hash = await wallet.execute({ to: roundAddress, data });
+  await publicClient.waitForTransactionReceipt({ hash });
+  return hash;
+}
+
 export type CreateRoundParams = {
   name: string;
   symbol: string;
