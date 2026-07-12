@@ -11,12 +11,12 @@
 import { createPublicClient, encodeFunctionData, http } from "viem";
 import { activeChain } from "./chain";
 import type { WalletHandle } from "./wdk";
+import { USDT_ADDRESS } from "./walletMode";
 import revenueShareRoundAbiJson from "../../packages/abi/RevenueShareRound.json";
 import roundFactoryAbiJson from "../../packages/abi/RoundFactory.json";
 import mockUsdtAbiJson from "../../packages/abi/MockUSDT.json";
 
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
-const USDT_ADDRESS = process.env.NEXT_PUBLIC_USDT_ADDRESS as `0x${string}` | undefined;
 const ROUND_FACTORY_ADDRESS = process.env.NEXT_PUBLIC_ROUND_FACTORY as `0x${string}` | undefined;
 
 export const revenueShareRoundAbi = revenueShareRoundAbiJson;

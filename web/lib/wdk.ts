@@ -28,7 +28,7 @@ import WalletManagerEvmErc4337, { type WalletAccountEvmErc4337 } from "@tetherto
 import { createWalletClient, http, type LocalAccount } from "viem";
 import { toAccount } from "viem/accounts";
 import { activeChain, CHAIN_ID } from "./chain";
-import { walletMode, erc4337Config, USDT_ADDRESS } from "./walletMode";
+import { walletMode, erc4337Config, USDT_ADDRESS, requireUsdt } from "./walletMode";
 import { idbGet, idbSet } from "./storage";
 
 export { USDT_ADDRESS };
@@ -153,13 +153,13 @@ export async function hasWallet(userId: string): Promise<boolean> {
 /** @deprecated Always reads the standard-mode EOA — use `(await getWallet(userId)).getUsdtBalance()` instead, which is correct in both modes. */
 export async function getUsdtBalance(userId: string): Promise<bigint> {
   const account = await getAccount(userId);
-  return account.getTokenBalance(USDT_ADDRESS);
+  return account.getTokenBalance(requireUsdt());
 }
 
 /** @deprecated Always sends from the standard-mode EOA — use `(await getWallet(userId)).transferUsdt(...)` instead, which is correct in both modes. */
 export async function transferUsdt(userId: string, recipient: `0x${string}`, amount: bigint) {
   const account = await getAccount(userId);
-  return account.transfer({ token: USDT_ADDRESS, recipient, amount });
+  return account.transfer({ token: requireUsdt(), recipient, amount });
 }
 
 /**
@@ -308,10 +308,10 @@ export async function getWallet(userId: string): Promise<WalletHandle> {
         return waitForUserOpTransactionHash(account, result.hash);
       },
       async getUsdtBalance() {
-        return account.getTokenBalance(USDT_ADDRESS);
+        return account.getTokenBalance(requireUsdt());
       },
       async transferUsdt(recipient, amount) {
-        const result = await account.transfer({ token: USDT_ADDRESS, recipient, amount });
+        const result = await account.transfer({ token: requireUsdt(), recipient, amount });
         return waitForUserOpTransactionHash(account, result.hash);
       },
     };
@@ -331,10 +331,10 @@ export async function getWallet(userId: string): Promise<WalletHandle> {
       return walletClient.sendTransaction({ to, data, value: value ?? 0n, chain: activeChain });
     },
     async getUsdtBalance() {
-      return account.getTokenBalance(USDT_ADDRESS);
+      return account.getTokenBalance(requireUsdt());
     },
     async transferUsdt(recipient, amount) {
-      const result = await account.transfer({ token: USDT_ADDRESS, recipient, amount });
+      const result = await account.transfer({ token: requireUsdt(), recipient, amount });
       return result.hash as `0x${string}`;
     },
   };

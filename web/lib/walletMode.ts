@@ -8,13 +8,25 @@ export function walletMode(): WalletMode {
   return process.env.NEXT_PUBLIC_WALLET_MODE === "erc4337" ? "erc4337" : "standard";
 }
 
-export const USDT_ADDRESS = (process.env.NEXT_PUBLIC_USDT_ADDRESS ??
-  "0x0000000000000000000000000000000000dEaD") as `0x${string}`; // TODO(wire): real mock USD₮ address on Sepolia (spec §9)
+// Single source of truth for the USD₮ token address. Undefined when unset —
+// no fake fallback address: code that needs it calls `requireUsdt()` and fails
+// loud, instead of silently pointing transfers/paymaster at a dead address.
+// (NEXT_PUBLIC_* must be a literal member access to be inlined into the client
+// bundle by Next.js; `process.env[name]` with a dynamic key reads empty there.)
+export const USDT_ADDRESS = process.env.NEXT_PUBLIC_USDT_ADDRESS as
+  | `0x${string}`
+  | undefined;
 
-// process.env.NEXT_PUBLIC_X must appear as a literal member access at each
-// call site — Next.js only inlines NEXT_PUBLIC_* into the client bundle when
-// it can statically see that exact form; `process.env[name]` (dynamic key)
-// is never replaced and reads empty in the browser.
+/** USD₮ address, or throw — use wherever a real token address is required. */
+export function requireUsdt(): `0x${string}` {
+  if (!USDT_ADDRESS) {
+    throw new Error(
+      "NEXT_PUBLIC_USDT_ADDRESS no configurado (requerido para transferencias / paymaster USD₮)",
+    );
+  }
+  return USDT_ADDRESS;
+}
+
 function required(name: string, value: string | undefined): string {
   if (!value) throw new Error(`${name} requerido en modo erc4337`);
   return value;
@@ -31,6 +43,6 @@ export function erc4337Config() {
       process.env.NEXT_PUBLIC_PAYMASTER_ADDRESS
     ) as `0x${string}`,
     safeModulesVersion: process.env.NEXT_PUBLIC_SAFE_MODULES_VERSION ?? "0.3.0",
-    paymasterToken: { address: USDT_ADDRESS },
+    paymasterToken: { address: requireUsdt() },
   };
 }

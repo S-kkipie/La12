@@ -101,10 +101,16 @@ retiene el % automático antes de pasar el resto. Sin oráculo, sin confianza, t
 3. Contrato de revenue-share reparte USDt pro-rata a holders.
 4. Skin de fútbol encima (club peruano ficticio "Deportivo San Martín" para el demo).
 
-### Fuera de alcance (mencionar como roadmap, NO construir)
-- **MYPE Score con IA** → fase 2 con QVAC (IA on-device lee finanzas y da score de riesgo).
-- **Mercado secundario P2P** → fase 2 con Pears (liquidez, revender el token).
-- **Equity real / notas convertibles** → cuando haya licencia y estructura legal.
+### Roadmap — features "wow" (ver [`vision.md`](./vision.md))
+Post-Ronda-de-16 empujamos lo que nadie más en el track tiene, y que además enciende más del
+Tether stack:
+- **Mercado secundario P2P** — el share ya es un ERC-20 tradeable (reward-debt liquidado en
+  `_update`); order-book/AMM in-app para comprar/vender la posición en USD₮. **No requiere Pears.**
+- **Tether stack completo** — Price Rates (matar el stub 1:1), Indexer, MoonPay, **Velora** (swap
+  cualquier token → USD₮), **Aave** (float de la ronda rinde yield mientras fondea).
+- **ERC-4337 al máximo** — approve+invest en un UserOp + **social recovery** del smart account.
+- **Oráculo de revenue on-chain** — proof-of-gate → repartos trust-minimized.
+- **MYPE Score con IA** → fase 2 (QVAC). **Equity real** → cuando haya licencia + estructura legal.
 
 ---
 
@@ -130,7 +136,7 @@ on-chain, transparente, self-custody.
 
 ## 7. Decisiones (resueltas en brainstorming — ver `docs/superpowers/specs/`)
 
-- [x] Red: **EVM / Ethereum (Sepolia testnet)**, USD₮ ERC-20. WDK wallet-evm; gasless ERC-4337 = stretch.
+- [x] Red: **EVM / Ethereum (Sepolia testnet)**, USD₮ ERC-20. WDK wallet-evm; **gasless ERC-4337 = live** (gas en USD₮ vía paymaster Candide).
 - [x] Club demo: **ficticio** — "Deportivo San Martín" (predecible para el juez).
 - [x] Pantallas: landing → club/ronda → wallet (invertir/cobrar) → panel club (distribute). Ver spec §7.
 - [ ] Equipo: quién toma qué tier de integración WDK (MoonPay / Aave / Velora).
@@ -139,7 +145,8 @@ on-chain, transparente, self-custody.
 
 ## Stack
 - **Tether WDK** — wallets self-custody + pagos USD₮ (core). `@tetherto/wdk` + `@tetherto/wdk-wallet-evm`.
-  Superficie explotada por tiers: wallet+transfer → Indexer → MoonPay → Price Rates → Velora → Aave.
+  Superficie WDK hoy: **wallet-evm + transfer USD₮ + gasless ERC-4337** (core, live). Indexer y
+  MoonPay cableados (finos). Price Rates, Velora y Aave = roadmap (ver [`vision.md`](./vision.md)).
 - **USD₮** — unidad de cuenta de todo (funding, repartos, retiros). 6 decimales.
 - **Smart contract** revenue-share — Solidity + OpenZeppelin (Foundry). Share = ERC-20, reparto
   claim-based (dividend accumulator). Chain: **EVM / Sepolia**.
@@ -211,9 +218,9 @@ dónde falta la clave real.
 
 - **WDK** = la capa de dinero de Tether. La Doce ES flujo de dinero (fondeo, reparto, retiro en
   USD₮), así que el producto encaja natural en el track. Da wallets self-custody sin custodiar
-  fondos (mata el riesgo regulatorio §6), USD₮ nativo, y UX sin fricción de gas. Explotamos su
-  superficie (wallets, Indexer, MoonPay, Price Rates, Velora, Aave) → puntaje alto en el criterio
-  "uso real de la plataforma".
+  fondos (mata el riesgo regulatorio §6), USD₮ nativo, y UX sin fricción de gas (gasless ERC-4337,
+  gas en USD₮). El core está live; ensanchamos la superficie (Price Rates, Velora, Aave) en el
+  roadmap → puntaje alto en el criterio "uso real de la plataforma".
 - **Ethereum/EVM** = el contrato de reparto es el corazón del producto, y Solidity + OpenZeppelin
   lo hacen más rápido y seguro (patrones auditados) en un hackathon corto. USD₮ ERC-20 con la
   liquidez más profunda, ejecución barata en L2, y transparencia on-chain = la historia de confianza
@@ -233,9 +240,9 @@ En `erc4337` las operaciones son UserOperations (`account.sendTransaction({to,da
 la **smart account** — un solo address en todo el flujo. El swap entre modos es solo config
 (bundler/paymaster URLs); la lógica de contratos e invest/claim/distribute es idéntica.
 
-> Estado: modos implementados y probados en `standard` (loop completo en anvil). La prueba gasless
-> real en Sepolia (contratos + bundler/paymaster Candide) es el último paso — ver
-> `docs/superpowers/plans/2026-07-05-erc4337-gasless-mainnet.md` (tasks 5-6).
+> Estado: **ambos modos live.** El loop completo corre en `standard` (anvil) y en `erc4337`
+> gasless sobre **Sepolia con bundler + paymaster Candide reales**, desplegado en
+> https://la12.aido.lat — el hincha paga el gas en USD₮, cero ETH.
 
 ## Licencia
 MIT — ver [`LICENSE`](./LICENSE). Requisito de la hack (repo público + licencia permisiva).
