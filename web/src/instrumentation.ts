@@ -15,5 +15,8 @@ export async function register() {
       { category: [], lowestLevel: isDev ? "debug" : "info", sinks: ["console"] },
     ],
     contextLocalStorage: new AsyncLocalStorage(),
+    // reset so a repeated register() (dev HMR / double-invoke) doesn't throw
+    // LogTape's ConfigError("Already configured").
+    reset: true,
   });
 }

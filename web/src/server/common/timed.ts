@@ -7,7 +7,7 @@ type TimedLogger = {
 /**
  * Times an async stage and logs `timing {label} {ms}ms` at debug level. Logs in
  * a `finally` so the duration is recorded even when `fn` throws (then rethrows).
- * Used to find where latency goes across DB/auth/Gemini stages.
+ * Used to find where latency goes across DB/auth/chain stages.
  */
 export async function timed<T>(
     logger: TimedLogger,

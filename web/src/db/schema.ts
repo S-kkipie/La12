@@ -3,7 +3,7 @@
 // authoritative for balances or ownership.
 import { pgTable, text, integer, serial, boolean, timestamp, index } from "drizzle-orm/pg-core";
 
-// --- Better Auth tables (lib/auth.ts) ---------------------------------------
+// --- Better Auth tables (server/auth/auth.ts) -------------------------------
 // Column names/types match Better Auth's Postgres/Drizzle adapter shape.
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -11,7 +11,7 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  // additionalFields.role in lib/auth.ts — never trusted from client input
+  // additionalFields.role in server/auth/auth.ts — never trusted from client input
   // for anything privileged (routes re-check the session).
   role: text("role", { enum: ["club", "fan"] }).notNull().default("fan"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),

@@ -31,7 +31,7 @@ const formatErrorCause = (cause: unknown): string => {
 export const errorToResponse = (error: AppError): APIErrorResponse => {
     // Surface the underlying cause of server errors (5xx) in the logs — the
     // wire response intentionally hides it, so this is the only place the real
-    // failure (e.g. a Firestore index requirement) becomes visible for
+    // failure (e.g. a DB constraint or an RPC/chain error) becomes visible for
     // debugging. Client errors (4xx) are expected control flow and stay quiet.
     if (error.status >= 500) {
         const cause = "cause" in error ? error.cause : undefined;
