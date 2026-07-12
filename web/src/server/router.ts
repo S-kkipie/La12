@@ -14,6 +14,7 @@ import {
   type STATUS_MAP,
 } from "@/server/common/responses";
 import { walletRouter } from "@/core/wallet/server/api/router";
+import { accountRouter } from "@/core/account/server/api/router";
 
 const apiErrorLogger = getLogger(["server", "error"]);
 
@@ -87,7 +88,8 @@ const app = new Elysia({ prefix: "/api/v1" })
     response: { 200: successResponseSchema(z.object({ ok: z.boolean() }), "Health") },
     detail: { tags: ["Common"], summary: "Liveness probe" },
   })
-  .use(walletRouter);
+  .use(walletRouter)
+  .use(accountRouter);
 
 export default app;
 export type AppRouter = typeof app;
