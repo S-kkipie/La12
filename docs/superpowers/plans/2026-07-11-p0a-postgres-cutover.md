@@ -693,4 +693,6 @@ git commit -m "fix(p0a): address issues found verifying Postgres cutover"
 
 - `lib/db.ts` reads `process.env.DATABASE_URL` directly for now; P0b folds it into `ServerConfig` (t3-env).
 - The `ssl` heuristic (`localhost` → off) is a stopgap; P0b's config layer should make it explicit per environment.
-- Prod cutover: point `DATABASE_URL` at the managed host (Supabase rec.), run `drizzle-kit push` then `pnpm db:migrate-pg` once against it, then redeploy `ladoce.service`.
+- Prod cutover: point `DATABASE_URL` at the managed host (Supabase rec.), run `drizzle-kit push` then `pnpm db:migrate-pg` **once, from the app host (same TZ as `ladoce.service`), before opening prod traffic**, then redeploy. Columns are `timestamptz` so instants are TZ-safe, but run the one-shot from the deploy host to avoid any ambiguity. **Warning:** `pnpm db:migrate-pg` begins with `TRUNCATE ... CASCADE` — re-running it after go-live wipes any Postgres-native signups. It is a one-shot, not a repeatable sync.
+- Deferred to P0b: the `lib/db.ts` `ssl` heuristic (`includes("localhost")`) is a stopgap — make SSL explicit per environment in the config layer.
+- Deferred to PF: a stale `better-sqlite3@11.10.0` transitive pulls a second `drizzle-orm` virtual instance, so editors/LSP may show a spurious `drizzle-orm` duplicate-instance TS2345 on files using `sql`/`eq`. `cd web && pnpm exec tsc --noEmit` (EXIT 0) is authoritative; the duplicate disappears when `better-sqlite3` is removed.
