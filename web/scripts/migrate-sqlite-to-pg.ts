@@ -29,7 +29,8 @@ export async function migrateSqliteToPg(sqlitePath: string): Promise<Record<stri
 
   const counts: Record<string, number> = {};
 
-  await db.transaction(async (tx) => {
+  try {
+    await db.transaction(async (tx) => {
     // FK-safe truncate (children first via CASCADE), reset serial sequences to 1.
     await tx.execute(
       sql`TRUNCATE TABLE ${events}, ${rounds}, ${profiles}, ${clubs}, ${session}, ${account}, ${verification}, ${user} RESTART IDENTITY CASCADE`,
@@ -121,9 +122,10 @@ export async function migrateSqliteToPg(sqlitePath: string): Promise<Record<stri
         sql.raw(`SELECT CASE WHEN (SELECT MAX(id) FROM "${t}") IS NOT NULL THEN setval(pg_get_serial_sequence('${t}', 'id'), (SELECT MAX(id) FROM "${t}"), true) END`),
       );
     }
-  });
-
-  sqlite.close();
+    });
+  } finally {
+    sqlite.close(); // always release the readonly handle, even if the tx rolls back
+  }
   return counts;
 }
 
