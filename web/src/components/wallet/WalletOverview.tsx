@@ -66,6 +66,8 @@ export function WalletOverview() {
   const refetchWallet = () => {
     queryClient.invalidateQueries({ queryKey: walletProxy.positions.get.queryKey() });
     queryClient.invalidateQueries({ queryKey: walletProxy.history.get.queryKey() });
+    // Re-read the on-chain USD₮ balance too — a claim/send/add-funds changed it.
+    if (wallet) void wallet.getUsdtBalance().then(setBalance).catch(() => {});
   };
 
   if (loading) {
