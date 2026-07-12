@@ -20,13 +20,18 @@ export const fanPositionSchema = z.object({
   status: roundStatusSchema,
 });
 
-/** Wire shape of a USD₮ transfer history entry. `hash` is a 32-byte tx hash (not an address). */
+/** Wire shape of a USD₮ transfer history entry. `hash` is a 32-byte tx hash (not
+ *  an address). `token`/`counterparty` are `z.string()` (not addressSchema): they
+ *  come from an external indexer whose payloads are deliberately tolerated, so
+ *  response validation must not turn a good (graceful-empty) read into a 500 if a
+ *  field isn't strict 20-byte hex. The domain HistoryEntry type still carries
+ *  `0x${string}` (see types.ts). */
 export const historyEntrySchema = z.object({
   hash: z.string(),
   kind: z.enum(["in", "out"]),
-  token: addressSchema,
+  token: z.string(),
   amount: z.string(),
-  counterparty: addressSchema,
+  counterparty: z.string(),
   blockNumber: z.string(),
   timestamp: z.number().int(),
 });

@@ -14,6 +14,11 @@ export const getPositionsRoute = new Elysia().get(
   "/positions",
   async ({ query, status }) => {
     const result = await getFanPositionsService(query.address as `0x${string}`);
+    // TEMPLATE NOTE: wallet reads only ever err with 500 (unexpected), so `as 500`
+    // + a {200,500} response map suffices. When you copy this route for a domain
+    // whose service can return notFound(404)/forbidden(403)/conflict(409), WIDEN
+    // both: the `error.status as 404 | 409 | 500` cast AND the `response:` map
+    // (add an errorResponseSchema(<status>) per status the service can emit).
     if (!result.ok) return status(result.error.status as 500, errorToResponse(result.error));
     return status(200, CommonResponse.successful({ response: result.data.map(toPositionDTO) }));
   },

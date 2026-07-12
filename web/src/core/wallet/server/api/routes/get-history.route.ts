@@ -14,6 +14,8 @@ export const getHistoryRoute = new Elysia().get(
   "/history",
   async ({ query, status }) => {
     const result = await getWalletHistoryService(query.address as `0x${string}`);
+    // TEMPLATE NOTE: single-status (500) error map — see get-positions.route.ts.
+    // Widen `as 500` + the `response:` map when a copied domain emits 403/404/409.
     if (!result.ok) return status(result.error.status as 500, errorToResponse(result.error));
     return status(200, CommonResponse.successful({ response: result.data.map(toHistoryDTO) }));
   },
