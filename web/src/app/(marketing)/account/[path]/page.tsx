@@ -2,7 +2,7 @@ import { AccountView } from "@daveyplate/better-auth-ui";
 import { accountViewPaths } from "@daveyplate/better-auth-ui/server";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 
 // Account/settings screens rendered by better-auth-ui. Dynamic (per-user): we
 // read the session server-side to gate access and bounce anonymous visitors to

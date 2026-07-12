@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { Suspense } from "react";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { db } from "@/lib/db";
 import { clubs } from "@/db/schema";
 import { EnsureWallet } from "@/components/EnsureWallet";

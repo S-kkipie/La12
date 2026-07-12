@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { authClient, useSession } from "@/lib/auth-client";
+import { authClient, useSession } from "@/frontend/auth/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,

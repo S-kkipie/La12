@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useCurrentUserId } from "@/lib/auth-client";
+import { useCurrentUserId } from "@/frontend/auth/auth";
 import { createWallet, getWallet } from "@/lib/wdk";
 import { approveUsdt, invest, usdtAllowance } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";

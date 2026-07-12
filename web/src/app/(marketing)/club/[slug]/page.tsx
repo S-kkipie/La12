@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { db } from "@/lib/db";
 import { clubs, rounds } from "@/db/schema";
 import { totalRaised, readSafely } from "@/lib/contracts";

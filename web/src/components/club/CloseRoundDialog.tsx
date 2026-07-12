@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { useCurrentUserId } from "@/lib/auth-client";
+import { useCurrentUserId } from "@/frontend/auth/auth";
 import { getWallet } from "@/lib/wdk";
 import { closeRound } from "@/lib/contracts";
 import { explorerTxUrl } from "@/lib/format";

@@ -4,7 +4,7 @@ import { AuthUIProvider } from "@daveyplate/better-auth-ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/frontend/auth/auth";
 
 // English strings for every better-auth-ui view we actually render:
 // sign-in, forgot-password, reset-password, sign-out, and the account/security

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { db } from "@/lib/db";
 import { rounds, clubs } from "@/db/schema";
 import { publicClient, revenueShareRoundAbi } from "@/lib/contracts";

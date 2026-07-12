@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 
 // better-auth-ui's redirectTo is a single static path, so every successful
 // sign-in / sign-up lands here. This server page reads the freshly-created

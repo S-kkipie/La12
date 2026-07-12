@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useCurrentUserId } from "@/lib/auth-client";
+import { useCurrentUserId } from "@/frontend/auth/auth";
 import { createWallet, getWallet, type WalletHandle } from "@/lib/wdk";
 import { friendlyError } from "@/lib/txError";
 import { parsePositionDTO, parseHistoryDTO, type FanPositionView, type HistoryEntryView } from "./types";

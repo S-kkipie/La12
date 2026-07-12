@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { RevenueDetail } from "@/components/club/RevenueDetail";
 
 export default async function RevenuePage() {

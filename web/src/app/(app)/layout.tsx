@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { DashboardShell } from "@/components/shell/DashboardShell";
 import type { Role } from "@/components/shell/nav-items";
 

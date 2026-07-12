@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useCurrentUserId } from "@/lib/auth-client";
+import { useCurrentUserId } from "@/frontend/auth/auth";
 import { createWallet, getWallet } from "@/lib/wdk";
 import { parseHistoryDTO, type HistoryEntryView } from "./types";
 import { ActivityList } from "./ActivityList";

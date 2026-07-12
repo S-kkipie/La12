@@ -9,7 +9,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/frontend/auth/auth";
 import { friendlyError } from "@/lib/txError";
 import { Button } from "@/components/ui/button";
 import {

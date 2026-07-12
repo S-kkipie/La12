@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { ActivityFull } from "@/components/wallet/ActivityFull";
 
 export default async function ActivityPage() {

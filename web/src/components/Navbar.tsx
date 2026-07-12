@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "@/lib/auth-client";
+import { useSession } from "@/frontend/auth/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { AccountMenu } from "@/components/shell/AccountMenu";
 

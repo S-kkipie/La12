@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { ArrowRight, ShieldCheck, Repeat, TrendingUp, Trophy } from "lucide-react";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { listClubsWithRounds } from "@/lib/clubDirectory";
 import { ClubCard } from "@/components/ClubCard";
 import { formatUsdt, formatBps, formatCapMultiple } from "@/lib/format";
