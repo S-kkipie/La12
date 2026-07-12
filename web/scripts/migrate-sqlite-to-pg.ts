@@ -105,9 +105,11 @@ export async function migrateSqliteToPg(sqlitePath: string): Promise<Record<stri
   counts.events = eRows.length;
 
   // Reset serial sequences past the max copied id so future auto-ids don't collide.
+  // For empty tables, TRUNCATE RESTART IDENTITY already leaves sequence at 0, so nextval() returns 1.
+  // Only call setval when table has data to avoid "value out of bounds" error with 0.
   for (const t of ["clubs", "rounds", "profiles", "events"]) {
     await db.execute(
-      sql.raw(`SELECT setval(pg_get_serial_sequence('${t}', 'id'), COALESCE((SELECT MAX(id) FROM "${t}"), 1))`),
+      sql.raw(`SELECT CASE WHEN (SELECT MAX(id) FROM "${t}") IS NOT NULL THEN setval(pg_get_serial_sequence('${t}', 'id'), (SELECT MAX(id) FROM "${t}"), true) END`),
     );
   }
 
@@ -117,7 +119,6 @@ export async function migrateSqliteToPg(sqlitePath: string): Promise<Record<stri
 
 // CLI: `pnpm db:migrate-pg`
 if (process.argv[1] && process.argv[1].endsWith("migrate-sqlite-to-pg.ts")) {
-  if (existsSync(".env.local")) process.loadEnvFile(".env.local");
   const path = process.env.DATABASE_PATH ?? "./ladoce.db";
   migrateSqliteToPg(path)
     .then((counts) => {
