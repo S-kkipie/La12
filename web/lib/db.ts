@@ -1,12 +1,16 @@
-// SQLite + Drizzle client (server-only). Off-chain metadata + event cache —
+// Postgres + Drizzle client (server-only). Off-chain metadata + event cache —
 // see db/schema.ts. Never import this from a "use client" component.
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "@/db/schema";
 
-const dbPath = process.env.DATABASE_PATH ?? "./ladoce.db";
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) throw new Error("DATABASE_URL is not set");
 
-const sqlite = new Database(dbPath);
-sqlite.pragma("journal_mode = WAL");
+// Managed Postgres (Supabase/Neon) terminates TLS with its own CA; allow it in
+// prod. Local docker Postgres has no TLS — disable there.
+const ssl = connectionString.includes("localhost") ? false : { rejectUnauthorized: false };
 
-export const db = drizzle(sqlite, { schema });
+const pool = new Pool({ connectionString, ssl });
+
+export const db = drizzle(pool, { schema, casing: "snake_case" });
