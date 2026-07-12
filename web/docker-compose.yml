@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: ladoce-pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ladoce
+    ports:
+      - "5432:5432"
+    volumes:
+      - ladoce-pgdata:/var/lib/postgresql/data
+volumes:
+  ladoce-pgdata:
