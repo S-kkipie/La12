@@ -13,7 +13,7 @@
 - **Reference app (copy patterns from):** `/home/skkippie/work/myworkin/myworkin-client/apps/myworkin-b2c/src`. Files under `server/common/responses/*` + `server/common/timed.ts` are copied **verbatim** (then AI-quota stripped — see Task 4). All other reference files are **adapted** to La Doce's smaller footprint.
 - **La Doce has none of:** Stripe, Google OAuth, Firebase, AI/Gemini, PostHog, Sentry, nuqs, extension, live-events, multiSession. Strip every reference of these when adapting. Keep only: Better Auth email+password with the `role: ["club","fan"]` additionalField, Drizzle+pg, viem/WDK (untouched), `@daveyplate/better-auth-ui` (NOT `@better-auth-ui/react`).
 - **Empty rails only.** No `core/<domain>` router is built in P0b. The root router mounts auth + middleware + a single `GET /health`. Domains come in P1+.
-- **Existing behavior must not break.** Every current `app/api/*` Route Handler, RSC page, and the `@daveyplate` auth UI keeps working throughout. The legacy `app/api/auth/[...all]/route.ts` mount **stays** until the client fully targets `/api/v1/auth` (verified in Task 7).
+- **Existing behavior must not break** — except auth's HTTP mount, which necessarily moves. Every current `app/api/*` Route Handler and RSC page keeps working (RSC/server code calls `auth.api.getSession()` internally, unaffected by `basePath`). **Auth coupling (Task 5↔6):** setting `basePath: "/api/v1/auth"` (Task 5) makes Better Auth's router expect `/api/v1/auth`, which the legacy `app/api/auth/[...all]/route.ts` (mounted at `/api/auth`) can no longer serve → it 404s. The working `/api/v1/auth` mount arrives only in Task 6. So **auth is intentionally unreachable over HTTP between Task 5 and Task 6**; do not treat that as a Task 5 failure. Task 6 mounts `/api/v1/auth` (Elysia) **and deletes the now-dead legacy `app/api/auth/[...all]/route.ts`** (nothing uses it — the client was repointed to `/api/v1/auth` in Task 5). The `@daveyplate` auth UI + `middleware.ts` cookie gate are otherwise untouched.
 - **Wire envelope (verbatim):** `{ response?: T, code: string, status: number, targets?: string[], detail?: unknown }`. `STATUS_MAP` = closed set `200/201/400/401/403/404/409/422/429/500`.
 - **Import parity:** after the `src/` move, `@/*` → `./src/*`, so `@/server/...`, `@/core/...`, `@/frontend/...`, `@/config/...`, `@/lib/...`, `@/db/...` all resolve under `src/`.
 - **NEXT_PUBLIC inlining gotcha:** Next only inlines `process.env.NEXT_PUBLIC_X` via **literal member access**. `lib/walletMode.ts` + `lib/chain.ts` depend on this and handle conditional validation. **Do NOT fold walletMode/chain into t3-env in P0b** — leave them reading `process.env` directly. P0b's config covers server env + the app base URL only. (Full walletMode→ClientConfig fold is a later cleanup.)
@@ -601,19 +601,26 @@ export const OPTIONS = app.fetch;
 Run: `cd web && pnpm exec tsc --noEmit && pnpm build`
 Expected: EXIT 0 + build success. (`z.toJSONSchema` exists in zod v4; the `await OpenAPI.*` at module top works under Next's async route module eval.)
 
-- [ ] **Step 4: Verify the health route returns the envelope (integration proof)**
+- [ ] **Step 4: Delete the now-dead legacy auth route**
 
-Run: `cd web && pnpm dev` (background), then:
-`curl -s http://localhost:3000/api/v1/health`
-Expected: `{"response":{"ok":true},"code":"OK","status":200}`.
-Also confirm auth still answers under the new mount: `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/v1/auth/ok` (or any Better Auth GET) → a 2xx/4xx, not a 404 (proves the mount). Stop the dev server.
+`basePath: "/api/v1/auth"` (Task 5) made Better Auth expect `/api/v1/auth`; the legacy `src/app/api/auth/[...all]/route.ts` (at `/api/auth`) can no longer serve it and nothing calls it (client repointed in Task 5, RSC uses `auth.api.getSession()` internally). The Elysia `.mount(auth.handler)` in Step 1 now serves auth at `/api/v1/auth`. Remove the dead route:
+```bash
+cd /home/skkippie/work/AI-DO/La12/web && git rm src/app/api/auth/\[...all\]/route.ts
+```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Verify the health route + auth end-to-end at the new mount (integration proof)**
+
+Run: `cd web && pnpm build` (confirms the removal + router compile), then `pnpm dev` (background):
+- `curl -s http://localhost:3000/api/v1/health` → `{"response":{"ok":true},"code":"OK","status":200}`.
+- Auth reachable at the new mount: `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/v1/auth/get-session` → 200/401 (NOT 404 — proves the Elysia auth mount). This is the runtime auth proof deferred from Task 5.
+- Full round-trip (proves auth writes to pg through the new mount): `curl -s -c /tmp/p0b.txt -X POST http://localhost:3000/api/v1/auth/sign-up/email -H 'Content-Type: application/json' -d '{"email":"p0b-verify@example.com","password":"Test12345!","name":"P0B"}'` → a token/user JSON (not 404/500). Then delete the test user: `docker compose exec -T postgres psql -U postgres -d ladoce -c "DELETE FROM \"user\" WHERE email='p0b-verify@example.com';"`. Stop the dev server.
+
+- [ ] **Step 6: Commit**
 
 ```bash
 cd /home/skkippie/work/AI-DO/La12
-git add web/src/server/router.ts web/src/app/api/v1
-git commit -m "feat(p0b): root Elysia router (auth mount + cors + docs + onError + health) + Next bridge"
+git add web/src/server/router.ts web/src/app/api/v1 web/src/app/api/auth
+git commit -m "feat(p0b): root Elysia router (auth mount + cors + docs + onError + health) + Next bridge; drop legacy /api/auth route"
 ```
 
 ---
@@ -780,7 +787,7 @@ git commit -m "feat(p0b): LogTape instrumentation (console sink)"
 - `cd web && pnpm exec tsc --noEmit` green; `pnpm build` green.
 - App reorganized under `src/`; `@/*` → `./src/*`; existing pages/handlers + `@daveyplate` auth UI still work.
 - `GET /api/v1/health` returns `{"response":{"ok":true},"code":"OK","status":200}`.
-- Better Auth mounted at `/api/v1/auth` (client repointed); legacy `/api/auth/[...all]` still present (removed in a later phase once nothing uses it).
+- Better Auth mounted at `/api/v1/auth` (client repointed in Task 5, Elysia mount in Task 6); legacy `/api/auth/[...all]` route **deleted** in Task 6 (dead after the basePath change). Auth verified end-to-end at `/api/v1/auth` (get-session + sign-up round-trip to pg).
 - `AppRouter` exported and typed; `useElysia()` proxy usable in client components; providers mount `QueryClientProvider` + `EdenProvider` with no hydration errors.
 - Commons (`server/common/responses/*` + `timed.ts`) present, AI-quota stripped, their tests green.
 - `authed` + `clubAuthed` macros exist. Config split (`ServerConfig`/`ClientConfig`) in place. zod on v4. LogTape emitting.
@@ -790,5 +797,5 @@ git commit -m "feat(p0b): LogTape instrumentation (console sink)"
 
 - `lib/walletMode.ts` + `lib/chain.ts` still read `process.env` directly (NEXT_PUBLIC inlining + conditional validation) — folding into `ClientConfig` is a later cleanup, not P0b.
 - Better Auth adapter switched `provider: "sqlite"` → `"pg"` here (P0a left it "sqlite"; it worked, but pg is correct).
-- The legacy `app/api/auth/[...all]` mount + the `middleware.ts` cookie gate stay as-is (myworkin has no middleware; moving gating to layout guards is a later alignment).
+- The legacy `app/api/auth/[...all]` route is deleted in Task 6 (the `basePath` change made it non-functional). The `middleware.ts` cookie gate stays as-is (myworkin has no middleware; moving gating to layout guards is a later alignment) — note its matcher (`/dashboard`, `/wallet`) only checks cookie presence, unaffected by the auth mount move.
 - `eden-server.ts` (RSC prefetch proxy) is intentionally NOT built in P0b — add it in the first domain (P1) that needs prefetch-hydration.
