@@ -1,33 +1,38 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCurrentUserId } from "@/frontend/auth/auth";
 import { createWallet, getWallet } from "@/lib/wdk";
-import { parseHistoryDTO, type HistoryEntryView } from "./types";
+import { useWalletHistory } from "@/core/wallet/client/hooks";
 import { ActivityList } from "./ActivityList";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function ActivityFull() {
   const { userId } = useCurrentUserId();
-  const [entries, setEntries] = useState<HistoryEntryView[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [address, setAddress] = useState<string | undefined>(undefined);
+  const [resolving, setResolving] = useState(true);
 
-  const load = useCallback(async () => {
+  // Resolve the self-custody WDK wallet address client-side.
+  useEffect(() => {
     if (!userId) return;
-    try {
-      await createWallet(userId);
-      const w = await getWallet(userId);
-      const res = await fetch(`/api/wallet/history?address=${w.address}`).then((r) => r.json());
-      setEntries((res.entries ?? []).map(parseHistoryDTO));
-    } finally {
-      setLoading(false);
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        await createWallet(userId); // no-op if it already exists
+        const w = await getWallet(userId);
+        if (cancelled) return;
+        setAddress(w.address);
+      } finally {
+        if (!cancelled) setResolving(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [userId]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const histQuery = useWalletHistory(address);
+  const entries = histQuery.data ?? [];
+  const loading = resolving || (!!address && histQuery.isLoading);
 
   return (
     <div className="mx-auto w-full max-w-3xl">

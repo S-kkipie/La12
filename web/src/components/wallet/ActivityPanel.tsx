@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ActivityList } from "./ActivityList";
-import type { HistoryEntryView } from "./types";
+import type { HistoryEntry } from "@/core/wallet/domain/types";
 import { Card } from "@/components/ui/card";
 
-export function ActivityPanel({ entries }: { entries: HistoryEntryView[] }) {
+export function ActivityPanel({ entries }: { entries: HistoryEntry[] }) {
   return (
     <Card className="gap-3 p-5">
       <div className="flex items-center justify-between">

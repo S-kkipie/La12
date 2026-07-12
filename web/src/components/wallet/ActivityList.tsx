@@ -1,8 +1,8 @@
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { formatUsdt, shortenAddress, formatRelativeTime, explorerTxUrl } from "@/lib/format";
-import type { HistoryEntryView } from "./types";
+import type { HistoryEntry } from "@/core/wallet/domain/types";
 
-export function ActivityList({ entries }: { entries: HistoryEntryView[] }) {
+export function ActivityList({ entries }: { entries: HistoryEntry[] }) {
   if (entries.length === 0) {
     return <div className="text-sm text-muted-foreground">No activity yet.</div>;
   }

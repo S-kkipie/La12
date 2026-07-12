@@ -2,16 +2,15 @@
 
 import Link from "next/link";
 import { formatUsdt } from "@/lib/format";
-import { percentOfRoundView } from "./positions-view";
+import { percentOfRound, type FanPosition } from "@/core/wallet/domain/types";
 import { ClaimPositionButton } from "./ClaimPositionButton";
-import type { FanPositionView } from "./types";
 import { Card } from "@/components/ui/card";
 
 export function PositionsList({
   positions,
   onClaimed,
 }: {
-  positions: FanPositionView[];
+  positions: FanPosition[];
   onClaimed: () => void;
 }) {
   if (positions.length === 0) {
@@ -35,7 +34,7 @@ export function PositionsList({
               <div>
                 <div className="font-display text-2xl tracking-wide">{p.clubName}</div>
                 <div className="text-xs text-muted-foreground">
-                  {formatUsdt(p.shares)} shares · {percentOfRoundView(p.shares, p.totalShares)}% of round
+                  {formatUsdt(p.shares)} shares · {percentOfRound(p.shares, p.totalShares)}% of round
                 </div>
               </div>
               <div className="text-right">

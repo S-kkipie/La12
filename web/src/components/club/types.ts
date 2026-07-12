@@ -4,7 +4,8 @@
 // browser. Server code (the club page/data layer) builds the *DTO shapes
 // (bigint fields serialized to strings, since bigint doesn't survive the
 // server->client RSC boundary), and these parsers turn them back into bigint
-// views for math/formatUsdt on the client. Mirrors components/wallet/types.ts.
+// views for math/formatUsdt on the client. (Wallet's equivalent DTOs/parsers now
+// live in core/wallet/domain/types.ts, wired through Eden — see Task 5.)
 
 export type ClubTotalsDTO = { raised: string; distributed: string; roundCount: number; backerCount: number };
 export type ClubRoundDTO = {

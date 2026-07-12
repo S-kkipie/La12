@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUserId } from "@/frontend/auth/auth";
+import { useElysia } from "@/frontend/lib/eden";
 import { createWallet, getWallet, type WalletHandle } from "@/lib/wdk";
 import { friendlyError } from "@/lib/txError";
-import { parsePositionDTO, parseHistoryDTO, type FanPositionView, type HistoryEntryView } from "./types";
+import { useWalletPositions, useWalletHistory } from "@/core/wallet/client/hooks";
 import { BalanceHero } from "./BalanceHero";
 import { StatCards } from "./StatCards";
 import { PositionsList } from "./PositionsList";
@@ -19,43 +21,52 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function WalletOverview() {
   const { userId } = useCurrentUserId();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
+  const walletProxy = useElysia().wallet;
 
   const [wallet, setWallet] = useState<WalletHandle | null>(null);
   const [balance, setBalance] = useState<bigint>(0n);
-  const [positions, setPositions] = useState<FanPositionView[]>([]);
-  const [activity, setActivity] = useState<HistoryEntryView[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(true);
+  const [walletError, setWalletError] = useState<string | null>(null);
 
   const [dialog, setDialog] = useState<null | "send" | "receive" | "addFunds">(
     searchParams.get("action") === "addFunds" ? "addFunds" : null,
   );
 
-  const refresh = useCallback(async () => {
+  // Resolve the self-custody WDK wallet (address + USD₮ balance) client-side.
+  useEffect(() => {
     if (!userId) return;
-    setError(null);
-    try {
-      await createWallet(userId); // no-op if it already exists
-      const w = await getWallet(userId);
-      setWallet(w);
-      const [bal, posRes, histRes] = await Promise.all([
-        w.getUsdtBalance(),
-        fetch(`/api/wallet/positions?address=${w.address}`).then((r) => r.json()),
-        fetch(`/api/wallet/history?address=${w.address}`).then((r) => r.json()),
-      ]);
-      setBalance(bal);
-      setPositions((posRes.positions ?? []).map(parsePositionDTO));
-      setActivity((histRes.entries ?? []).map(parseHistoryDTO));
-    } catch (err) {
-      setError(friendlyError(err));
-    } finally {
-      setLoading(false);
-    }
+    let cancelled = false;
+    (async () => {
+      setWalletError(null);
+      try {
+        await createWallet(userId); // no-op if it already exists
+        const w = await getWallet(userId);
+        if (cancelled) return;
+        setWallet(w);
+        setBalance(await w.getUsdtBalance());
+      } catch (err) {
+        if (!cancelled) setWalletError(friendlyError(err));
+      } finally {
+        if (!cancelled) setResolving(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [userId]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  const address = wallet?.address;
+  const posQuery = useWalletPositions(address);
+  const histQuery = useWalletHistory(address);
+  const positions = posQuery.data ?? [];
+  const activity = histQuery.data ?? [];
+
+  const loading = resolving || (!!address && (posQuery.isLoading || histQuery.isLoading));
+  const error = walletError; // read failures degrade to empty per the API contract
+
+  const refetchWallet = () => {
+    queryClient.invalidateQueries({ queryKey: walletProxy.positions.get.queryKey() });
+    queryClient.invalidateQueries({ queryKey: walletProxy.history.get.queryKey() });
+  };
 
   if (loading) {
     return (
@@ -102,7 +113,7 @@ export function WalletOverview() {
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="flex flex-col gap-3 lg:col-span-2">
           <h2 className="font-display text-xl uppercase tracking-wide">Your positions</h2>
-          <PositionsList positions={positions} onClaimed={refresh} />
+          <PositionsList positions={positions} onClaimed={refetchWallet} />
         </div>
         <ActivityPanel entries={activity} />
       </div>
@@ -112,7 +123,7 @@ export function WalletOverview() {
         onOpenChange={(v) => setDialog(v ? "send" : null)}
         wallet={wallet}
         balance={balance}
-        onSent={refresh}
+        onSent={refetchWallet}
       />
       <ReceiveDialog
         open={dialog === "receive"}
@@ -123,7 +134,7 @@ export function WalletOverview() {
         open={dialog === "addFunds"}
         onOpenChange={(v) => setDialog(v ? "addFunds" : null)}
         address={wallet?.address ?? ""}
-        onFunded={refresh}
+        onFunded={refetchWallet}
       />
     </div>
   );
