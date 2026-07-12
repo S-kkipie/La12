@@ -608,19 +608,23 @@ Add the import near the other imports:
 ```ts
 import { walletRouter } from "@/core/wallet/server/api/router";
 ```
-In the `.onError(...)` block, change the VALIDATION branch to include `targets`, and add a `NOT_FOUND` passthrough before the generic 500. Replace the current `onError` body with:
+In the `.onError(...)` block, change the VALIDATION branch to include `targets`, and add a `NOT_FOUND` passthrough before the generic 500. **NOTE (verified empirically):** Elysia validates with **zod** here (not TypeBox as in the reference), so the validation error's `valueError.path` is an **array** (`["address"]`) and `error.status` is **422** — the reference's `typeof path === "string"` check never matches. Replace the current `onError` body with:
 ```ts
   .onError(({ error, code, request, path }) => {
-    if (code === "VALIDATION")
+    if (code === "VALIDATION") {
+      // Elysia + zod: error.valueError is the first zod issue; its `path` is an
+      // array of the failing field(s), e.g. ["address"] (status is 422).
+      const valueError = (error as { valueError?: { path?: unknown } }).valueError;
+      const targets = Array.isArray(valueError?.path)
+        ? (valueError.path as unknown[]).map(String)
+        : undefined;
       return {
         code,
         status: (error as { status?: number }).status as keyof typeof STATUS_MAP,
-        response: (error as { valueError?: unknown }).valueError,
-        targets:
-          typeof (error as { valueError?: { path?: unknown } }).valueError?.path === "string"
-            ? [(error as { valueError: { path: string } }).valueError.path]
-            : undefined,
+        response: valueError,
+        targets,
       } satisfies APIResponse<unknown>;
+    }
     if (code === "NOT_FOUND") return { code: "NOT_FOUND", status: 404 } satisfies APIResponse;
     apiErrorLogger.error("Unhandled API error {code} on {method} {path}: {error}", {
       code,
@@ -647,7 +651,7 @@ Expected: EXIT 0 + build. (`AppRouter` now includes the wallet paths.)
 Run: `cd web && pnpm dev` (background; note the actual port — may be 3001). Then (use the real port):
 - `curl -s "http://localhost:3000/api/v1/wallet/positions?address=0x0000000000000000000000000000000000000001"` → `{"response":[],"code":"OK","status":200}` (empty is valid — that address holds nothing).
 - `curl -s "http://localhost:3000/api/v1/wallet/history?address=0x0000000000000000000000000000000000000001"` → `{"response":[...],"code":"OK","status":200}` (array, possibly empty).
-- Bad address (proves zod + the onError `targets` fix): `curl -s "http://localhost:3000/api/v1/wallet/positions?address=nope"` → a 400 envelope whose body includes `"code":"VALIDATION"` and `"targets":["address"]`.
+- Bad address (proves zod + the onError `targets` fix): `curl -s "http://localhost:3000/api/v1/wallet/positions?address=nope"` → a **422** envelope whose body includes `"code":"VALIDATION"` and `"targets":["address"]` (zod validation → 422, not 400).
 Stop the dev server.
 
 - [ ] **Step 7: Commit**
@@ -846,7 +850,7 @@ git commit -m "feat(p1): swap WalletOverview to Eden wallet hooks; delete legacy
 ## Acceptance criteria (P1 done)
 
 - `pnpm exec tsc --noEmit` + `pnpm build` green; all wallet tests pass (domain 3, repository 1, service 2).
-- `GET /api/v1/wallet/positions?address=` + `/history?address=` return the wire envelope; a bad address → 400 with `targets:["address"]` (onError fix proven).
+- `GET /api/v1/wallet/positions?address=` + `/history?address=` return the wire envelope; a bad address → 422 with `targets:["address"]` (onError fix proven).
 - The wallet page renders positions + history through the typed Eden hooks; no `fetch("/api/wallet/*")` remains; `src/lib/positions.ts` + both legacy routes deleted; no duplicated wallet DTO parsers.
 - `walletRouter` is `.use()`d in `src/server/router.ts` (domain wired).
 - Money truth still on-chain; WDK self-custody untouched; no `authed` on wallet reads.

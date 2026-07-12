@@ -13,6 +13,7 @@ import {
   type APIResponse,
   type STATUS_MAP,
 } from "@/server/common/responses";
+import { walletRouter } from "@/core/wallet/server/api/router";
 
 const apiErrorLogger = getLogger(["server", "error"]);
 
@@ -57,12 +58,22 @@ const app = new Elysia({ prefix: "/api/v1" })
   .use(serverTiming())
   .use(elysiaLogger())
   .onError(({ error, code, request, path }) => {
-    if (code === "VALIDATION")
+    if (code === "VALIDATION") {
+      // Elysia + zod: error.valueError is the first zod issue; its `path` is an
+      // array of the failing field(s), e.g. ["address"]. (The reference uses
+      // TypeBox where path is a string — that shape doesn't apply here.)
+      const valueError = (error as { valueError?: { path?: unknown } }).valueError;
+      const targets = Array.isArray(valueError?.path)
+        ? (valueError.path as unknown[]).map(String)
+        : undefined;
       return {
         code,
         status: (error as { status?: number }).status as keyof typeof STATUS_MAP,
-        response: (error as { valueError?: unknown }).valueError,
+        response: valueError,
+        targets,
       } satisfies APIResponse<unknown>;
+    }
+    if (code === "NOT_FOUND") return { code: "NOT_FOUND", status: 404 } satisfies APIResponse;
     apiErrorLogger.error("Unhandled API error {code} on {method} {path}: {error}", {
       code,
       method: request.method,
@@ -75,7 +86,8 @@ const app = new Elysia({ prefix: "/api/v1" })
   .get("/health", ({ status }) => status(200, CommonResponse.successful({ response: { ok: true } })), {
     response: { 200: successResponseSchema(z.object({ ok: z.boolean() }), "Health") },
     detail: { tags: ["Common"], summary: "Liveness probe" },
-  });
+  })
+  .use(walletRouter);
 
 export default app;
 export type AppRouter = typeof app;
