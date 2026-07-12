@@ -9,6 +9,17 @@ import { db } from "@/lib/db";
 import { clubs, rounds, user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+// This test opens with TRUNCATE ... CASCADE against DATABASE_URL — destructive,
+// and node's test runner otherwise runs files concurrently with the roundtrip
+// test, racing on the same DB. Require an explicit opt-in (see package.json's
+// test:db, which sets this flag and forces --test-concurrency=1) so a bare
+// `pnpm test` / stray `tsx --test` run can't wipe a precious database.
+if (!process.env.ALLOW_DESTRUCTIVE_MIGRATION_TEST) {
+  throw new Error(
+    "Refusing to run destructive migration test. Set ALLOW_DESTRUCTIVE_MIGRATION_TEST=1 and point DATABASE_URL at a throwaway DB.",
+  );
+}
+
 // Build a tiny sqlite fixture with the legacy column shapes + encodings, run the
 // migration, and assert Postgres row counts + preserved ids + type conversions.
 function buildFixture(): string {
@@ -49,19 +60,25 @@ function buildFixture(): string {
 
 test("migrateSqliteToPg copies all tables with counts, ids, and conversions", async () => {
   const counts = await migrateSqliteToPg(buildFixture());
-  assert.deepEqual(counts, {
+  assert.deepStrictEqual(counts, {
     user: 1, session: 0, account: 0, verification: 0, clubs: 1, rounds: 1, profiles: 0, events: 0,
   });
 
   const [c] = await db.select().from(clubs).where(eq(clubs.id, 7));
-  assert.equal(c.id, 7); // preserved pk
-  assert.equal(c.createdAt instanceof Date, true);
+  assert.strictEqual(c.id, 7); // preserved pk
+  assert.strictEqual(c.createdAt instanceof Date, true);
+  // Guards against a dropped `*1000` in sec(): fixture's nowSec = 1_700_000_000.
+  assert.strictEqual(c.createdAt.getTime(), 1_700_000_000_000);
 
   const [r] = await db.select().from(rounds).where(eq(rounds.id, 3));
-  assert.equal(r.goal, "123456789012345678"); // bigint precision preserved
-  assert.equal(r.verified, true); // 1 -> boolean
+  assert.strictEqual(r.goal, "123456789012345678"); // bigint precision preserved
+  assert.strictEqual(typeof r.revenueBps, "number");
+  assert.strictEqual(r.revenueBps, 800);
+  assert.strictEqual(typeof r.verified, "boolean");
+  assert.strictEqual(r.verified, true); // 1 -> boolean
 
   const [u] = await db.select().from(user).where(eq(user.id, "u1"));
-  assert.equal(u.emailVerified, true);
-  assert.equal(u.createdAt.getTime(), 1_700_000_000_000); // ms preserved
+  assert.strictEqual(u.emailVerified, true);
+  assert.strictEqual(typeof u.createdAt.getTime(), "number");
+  assert.strictEqual(u.createdAt.getTime(), 1_700_000_000_000); // ms preserved
 });

@@ -14,18 +14,18 @@ export const user = pgTable("user", {
   // additionalFields.role in lib/auth.ts — never trusted from client input
   // for anything privileged (routes re-check the session).
   role: text("role", { enum: ["club", "fan"] }).notNull().default("fan"),
-  createdAt: timestamp("created_at").notNull().$defaultFn(() => new Date()),
-  updatedAt: timestamp("updated_at").notNull().$defaultFn(() => new Date()).$onUpdate(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()).$onUpdate(() => new Date()),
 });
 
 export const session = pgTable(
   "session",
   {
     id: text("id").primaryKey(),
-    expiresAt: timestamp("expires_at").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     token: text("token").notNull().unique(),
-    createdAt: timestamp("created_at").notNull().$defaultFn(() => new Date()),
-    updatedAt: timestamp("updated_at").notNull().$defaultFn(() => new Date()).$onUpdate(() => new Date()),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()).$onUpdate(() => new Date()),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
@@ -43,12 +43,12 @@ export const account = pgTable(
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
-    accessTokenExpiresAt: timestamp("access_token_expires_at"),
-    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
     scope: text("scope"),
     password: text("password"), // email+password hash lives here, per Better Auth's model
-    createdAt: timestamp("created_at").notNull().$defaultFn(() => new Date()),
-    updatedAt: timestamp("updated_at").notNull().$defaultFn(() => new Date()).$onUpdate(() => new Date()),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()).$onUpdate(() => new Date()),
   },
   (table) => [index("account_userId_idx").on(table.userId)],
 );
@@ -59,17 +59,19 @@ export const verification = pgTable(
     id: text("id").primaryKey(),
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
-    expiresAt: timestamp("expires_at").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     // Better Auth's CLI generator (verified via Step 5 drift check, 2026-07)
     // emits both as NOT NULL for the Postgres/Drizzle adapter — differs from
     // the earlier hand-transcribed SQLite version, which left them nullable.
-    createdAt: timestamp("created_at").notNull().$defaultFn(() => new Date()),
-    updatedAt: timestamp("updated_at").notNull().$defaultFn(() => new Date()),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
 // --- App tables --------------------------------------------------------------
+// Datetimes below are `timestamptz` deliberately: they store absolute instants,
+// so migrating from a non-UTC host and reading on a UTC host doesn't shift times.
 export const clubs = pgTable("clubs", {
   id: serial("id").primaryKey(),
   // Nullable: the seeded demo club predates auth. New clubs set this at /signup.
@@ -79,7 +81,7 @@ export const clubs = pgTable("clubs", {
   logoUrl: text("logo_url"),
   description: text("description"),
   walletAddress: text("wallet_address").notNull(),
-  createdAt: timestamp("created_at").notNull().$defaultFn(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),
 });
 
 export const rounds = pgTable("rounds", {
@@ -90,11 +92,11 @@ export const rounds = pgTable("rounds", {
   sharePrice: text("share_price").notNull(), // USD₮ base units per share
   revenueBps: integer("revenue_bps").notNull(), // retained %, e.g. 800 = 8%
   capMultiple: integer("cap_multiple").notNull(), // bps-scaled, e.g. 15000 = 1.5x
-  deadline: timestamp("deadline").notNull(),
+  deadline: timestamp("deadline", { withTimezone: true }).notNull(),
   status: text("status", { enum: ["funding", "active", "closed"] }).notNull().default("funding"),
   // off-chain allowlist flag — see db/schema.ts history; only vetted rounds are true.
   verified: boolean("verified").notNull().default(false),
-  createdAt: timestamp("created_at").notNull().$defaultFn(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),
 });
 
 export const profiles = pgTable("profiles", {
@@ -102,7 +104,7 @@ export const profiles = pgTable("profiles", {
   userId: text("user_id").references(() => user.id),
   walletAddress: text("wallet_address").notNull().unique(),
   displayName: text("display_name"),
-  createdAt: timestamp("created_at").notNull().$defaultFn(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),
 });
 
 // Cache of on-chain events (invest/distribute/claim/close). Populated by
@@ -114,7 +116,7 @@ export const events = pgTable("events", {
   txHash: text("tx_hash").notNull(),
   amount: text("amount").notNull(), // USD₮ base units, string for bigint precision
   block: integer("block").notNull(),
-  ts: timestamp("ts").notNull(),
+  ts: timestamp("ts", { withTimezone: true }).notNull(),
 });
 
 export type User = typeof user.$inferSelect;

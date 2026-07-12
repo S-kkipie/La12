@@ -11,7 +11,7 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx db/seed.ts",
     "db:migrate-pg": "tsx --env-file-if-exists=.env.local scripts/migrate-sqlite-to-pg.ts",
-    "test:db": "tsx --test lib/db.roundtrip.test.ts scripts/migrate-sqlite-to-pg.test.ts"
+    "test:db": "ALLOW_DESTRUCTIVE_MIGRATION_TEST=1 tsx --env-file-if-exists=.env.local --test --test-concurrency=1 lib/db.roundtrip.test.ts scripts/migrate-sqlite-to-pg.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
