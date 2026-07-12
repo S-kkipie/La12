@@ -253,3 +253,24 @@ Migrate in this order, each copying the P1 template, each its own dated design s
 - **This doc** = umbrella roadmap + P0a/P0b/P1 detail. Feeds `writing-plans` for the first phase.
 - **`docs/code-review/*`** = the review rulebook (staged, verbatim).
 - **P2..N** = one dated design spec each, written when the phase is reached.
+
+---
+
+## 8. Deferred phase — auth-UI swap to `@better-auth-ui` (shadcn registry)
+
+Own phase, runs **after P0b** (orthogonal to the Elysia rails and the domain migrations; can interleave with P1+). Replaces the current `@daveyplate/better-auth-ui` with the `@better-auth-ui` shadcn-registry approach that myworkin uses. Own spec+plan when reached. Researched 2026-07-12; mechanism below so the future plan doesn't re-investigate.
+
+**Decisions locked:**
+- Placement: **separate phase after P0b** — P0b keeps `@daveyplate` untouched.
+- Role field: **keep La Doce's custom sign-up page** (role club/fan selector). Use `@better-auth-ui` only for sign-in / forgot-password / reset-password / account. Two sign-up styles coexist; do NOT move role to `additionalFields`.
+- Theme: vendored components ship `radix-vega`/`neutral`; La Doce is **bold-stadium** (lime/black, `@base-ui` primitives). Re-theming the vendored components to bold-stadium is in-scope for this phase (functional-first is acceptable, then restyle).
+
+**Mechanism (from myworkin, verbatim):**
+- **npm:** `@better-auth-ui/core@^1.6.8` + `@better-auth-ui/react@^1.6.8` (provider/hooks/types). Plus `shadcn` CLI (La Doce already has `shadcn@^4.13.0`). Remove `@daveyplate/better-auth-ui`.
+- **Components are vendored, not imported:** `npx shadcn@latest add https://better-auth-ui.com/r/auth.json` (+ `r/settings.json`, `r/user-button.json`, or `r/all.json`) generates source into `src/components/auth/**` (the `<Auth>` view-dispatcher, `sign-in`, `sign-up`, `forgot-password`, `reset-password`, `sign-out`, `additional-field`, `provider-button(s)`, `user/user-button`, `settings/{account,security}/*`), committed to the repo. Each file pulls hooks from `@better-auth-ui/react` (`useAuth`, `useSignInEmail`, `useChangePassword`, `useListAccounts`, `useSession`, …) + types from `@better-auth-ui/core`, and renders local shadcn `ui/*` primitives (`button`, `card`, `field`, `input`, `label`, `checkbox`, `spinner` — `shadcn add` pulls any missing primitives).
+- **Provider** (`@better-auth-ui/react`): `import { AuthProvider } from "@better-auth-ui/react"` with props `authClient` · `redirectTo` · `socialProviders={[...]}` · `emailAndPassword={{ enabled, forgotPassword }}` · `navigate={({ to, replace }) => replace ? router.replace(to) : router.push(to)}` · `Link` · `localization` (shape `{ auth: {...}, settings: {...} }`). **No** `settings`/`account`/`settingsUrl` props. `Link` typing is augmented via `declare module "@better-auth-ui/core" { interface AuthConfig { Link: ... } }` in a local `auth-provider.tsx`.
+- **Catch-all** `app/auth/[path]/page.tsx`: `import { viewPaths } from "@better-auth-ui/core"`; validate `Object.values(viewPaths.auth).includes(path)` → `notFound()`; render `<Auth path={path} />` (the vendored dispatcher). No `generateStaticParams`.
+- **Settings/account** composed by hand (no package `AccountView`): a screen renders `<UserProfile/>`, `<ChangeEmail/>`, `<LinkedAccounts/>`, `<ChangePassword/>`, `<ActiveSessions/>` from `src/components/auth/settings/**`. `UserButton` placed in the app chrome (hardcodes `/profile` internally).
+- **`components.json`:** `style: "radix-vega"`, `baseColor: "neutral"`, `iconLibrary: "lucide"`; aliases route `components`→ the components dir, `ui`→ the `ui` dir. Optionally persist a named registry `"@better-auth-ui": "https://better-auth-ui.com/r/{name}.json"` (myworkin passed the URL inline and did not persist one).
+
+**La Doce specifics for the future plan:** keep `app/auth/sign-up/page.tsx` (custom role selector) and route the provider's sign-up view to it or leave it as the linked sign-up; re-theme vendored components to bold-stadium; reconcile `@base-ui` (La Doce) vs the registry's radix primitives (add missing `ui/*` primitives via `shadcn add`); update `authClient` is already `/api/v1/auth` after P0b.
