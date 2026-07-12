@@ -18,6 +18,7 @@
 - **Domain tri-layer:** `domain/` pure + zod + `__tests__`; `server/{api/routes,services,repository}`; `client/`. Dependencies point inward. **A domain isn't wired until its router is `.use()`d in `src/server/router.ts`.**
 - Repositories `import "server-only"` + shared `db` (`@/lib/db`). No `console.*` in server code. No `any`/`as any`/`as unknown as` (a post-regex `as \`0x${string}\`` narrowing is sanctioned). Files <500 lines.
 - Authoritative gate: `cd web && pnpm exec tsc --noEmit` (EXIT 0). Ignore the known LSP `drizzle-orm` dup-instance false positive; trust the CLI exit code.
+- **Testing server-only modules:** any test that imports a `server/repository` or `server/services` module (which `import "server-only"`, and transitively `@/lib/db`) must run with **`pnpm exec tsx --conditions=react-server --test`** (resolves `server-only`'s empty export instead of its throwing default) **and** `DATABASE_URL=postgres://postgres:postgres@localhost:5432/ladoce` set (importing the service/repo eval-loads `@/lib/db`, which throws if `DATABASE_URL` is unset — even when the test injects fakes and never queries). Pure `domain/` tests need neither. Before a repository integration test, run `pnpm db:migrate-pg` to ensure pg holds the real seeded data (a prior parity-test run can leave `0xround`/`fixture-club` pollution).
 - Work from `/home/skkippie/work/AI-DO/La12/web`. Package manager pnpm. Postgres running (`DATABASE_URL` in `.env.local`, seeded demo club `deportivo-san-martin` + its verified round). Tests: `pnpm exec tsx --test <file>`.
 - Domain data shapes (preserve exactly):
   - `FanPosition`: `{ roundId:number; contractAddress:\`0x${string}\`; clubName:string; clubSlug:string; shares:bigint; totalShares:bigint; investedUsdt:bigint; claimable:bigint; raised:bigint; goal:bigint; status:"funding"|"active"|"closed" }`
@@ -321,8 +322,12 @@ test("findVerifiedRounds returns verified rounds joined to their club", async ()
 
 - [ ] **Step 3: Run it**
 
-Run: `cd web && DATABASE_URL=postgres://postgres:postgres@localhost:5432/ladoce pnpm exec tsx --test src/core/wallet/server/repository/__tests__/find-verified-rounds.test.ts`
-Expected: PASS. (If the demo round isn't seeded, run `pnpm db:seed` first — the join + verified filter is what's under test.)
+Run (first restore real pg data, then test with the react-server condition — see Global Constraints):
+```bash
+cd web && pnpm db:migrate-pg
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/ladoce pnpm exec tsx --conditions=react-server --test src/core/wallet/server/repository/__tests__/find-verified-rounds.test.ts
+```
+Expected: PASS. (`--conditions=react-server` is REQUIRED — the repo `import "server-only"` throws under plain `tsx`. `db:migrate-pg` clears any `0xround`/`fixture-club` pollution from a prior parity-test run and restores the real demo round.)
 
 - [ ] **Step 4: Typecheck + commit**
 
@@ -493,8 +498,11 @@ test("returns err(unexpected) when the repository throws", async () => {
 
 - [ ] **Step 4: Run it + typecheck**
 
-Run: `cd web && pnpm exec tsx --test src/core/wallet/server/services/__tests__/get-fan-positions-service.test.ts`
-Expected: 2 pass. Then `cd web && pnpm exec tsc --noEmit` → EXIT 0.
+Run (needs the react-server condition + DATABASE_URL — importing the service eval-loads `@/lib/db`; see Global Constraints):
+```bash
+cd web && DATABASE_URL=postgres://postgres:postgres@localhost:5432/ladoce pnpm exec tsx --conditions=react-server --test src/core/wallet/server/services/__tests__/get-fan-positions-service.test.ts
+```
+Expected: 2 pass (the test injects fakes, but the import chain still loads `@/lib/db`, so `DATABASE_URL` must be set). Then `cd web && pnpm exec tsc --noEmit` → EXIT 0.
 
 - [ ] **Step 5: Commit**
 
