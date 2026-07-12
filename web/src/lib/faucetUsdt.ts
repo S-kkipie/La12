@@ -7,7 +7,7 @@
 import { createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { activeChain } from "./chain";
-import mockUsdtAbi from "../../packages/abi/MockUSDT.json";
+import mockUsdtAbi from "../../../packages/abi/MockUSDT.json";
 
 const RPC_URL =
   process.env.RPC_URL ?? process.env.NEXT_PUBLIC_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
