@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ensureWalletLinked } from "@/lib/ensureWallet";
+import { useEnsureWallet } from "@/core/account/client/use-ensure-wallet";
 import { friendlyError } from "@/lib/txError";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -21,6 +21,7 @@ type Props = {
  */
 export function EnsureWallet({ userId, hasWalletLinked }: Props) {
   const router = useRouter();
+  const ensureWallet = useEnsureWallet();
   const [healing, setHealing] = useState(!hasWalletLinked);
   const ran = useRef(false);
 
@@ -28,10 +29,12 @@ export function EnsureWallet({ userId, hasWalletLinked }: Props) {
     if (hasWalletLinked || ran.current) return;
     ran.current = true;
 
-    ensureWalletLinked(userId)
+    ensureWallet(userId)
       .then(() => router.refresh())
       .catch((err) => toast.error(friendlyError(err)))
       .finally(() => setHealing(false));
+    // ensureWallet closes over a stable mutation; the run-once ref guards re-entry.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasWalletLinked, router, userId]);
 
   if (!hasWalletLinked && healing) {
