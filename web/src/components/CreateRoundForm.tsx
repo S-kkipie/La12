@@ -8,6 +8,7 @@ import { createWallet, getWallet } from "@/lib/wdk";
 import { createRoundOnChain } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
 import { friendlyError } from "@/lib/txError";
+import { useRounds } from "@/core/rounds/client/hooks";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,8 @@ type Props = {
 export function CreateRoundForm({ clubName, clubWalletAddress, usdtAddress, onCreated }: Props) {
   const router = useRouter();
   const { userId } = useCurrentUserId();
+  const { useCreate } = useRounds();
+  const createRound = useCreate();
   const [goal, setGoal] = useState("40000");
   const [sharePrice, setSharePrice] = useState("1");
   const [revenueBps, setRevenueBps] = useState("800");
@@ -53,22 +56,20 @@ export function CreateRoundForm({ clubName, clubWalletAddress, usdtAddress, onCr
       });
 
       toast.loading("Registering round…", { id: toastId });
-      const res = await fetch("/api/rounds", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      try {
+        await createRound.mutateAsync({
           contractAddress,
           goal: parseUsdt(goal).toString(),
           sharePrice: parseUsdt(sharePrice).toString(),
           revenueBps: Number(revenueBps),
           capMultiple: Number(capMultiple),
-          deadline: new Date(Number(deadline) * 1000).toISOString(),
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        toast.error(data.error ?? "Could not register the round", { id: toastId });
-        return;
+          deadline: new Date(Number(deadline) * 1000),
+        });
+      } catch {
+        // eden-tanstack's mutationFn throws result.error on an API error, so
+        // mutateAsync rejects on failure — normalize to one friendly message,
+        // caught uniformly below alongside the on-chain-deploy failure path.
+        throw new Error("No se pudo registrar la ronda");
       }
 
       toast.success("Round created!", { id: toastId });

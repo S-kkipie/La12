@@ -6,7 +6,7 @@ import { auth } from "@/server/auth/auth";
 import { db } from "@/lib/db";
 import { clubs, rounds } from "@/db/schema";
 import { totalRaised, readSafely } from "@/lib/contracts";
-import { tryCloseFundingIfDue } from "@/lib/closeFunding";
+import { tryCloseFundingIfDue } from "@/core/rounds/server/services/try-close-funding";
 import { RoundProgress } from "@/components/RoundProgress";
 import { InvestForm } from "@/components/InvestForm";
 

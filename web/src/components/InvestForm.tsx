@@ -8,6 +8,7 @@ import { createWallet, getWallet } from "@/lib/wdk";
 import { approveUsdt, invest, usdtAllowance } from "@/lib/contracts";
 import { parseUsdt } from "@/lib/format";
 import { friendlyError } from "@/lib/txError";
+import { useRounds } from "@/core/rounds/client/hooks";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,8 @@ type Props = {
 export function InvestForm({ roundId, roundAddress, onInvested }: Props) {
   const router = useRouter();
   const { userId } = useCurrentUserId();
+  const { useCloseCheck } = useRounds();
+  const closeCheck = useCloseCheck(roundId);
   const [amount, setAmount] = useState("10");
   const [status, setStatus] = useState<"idle" | "pending" | "done">("idle");
 
@@ -48,7 +51,7 @@ export function InvestForm({ roundId, roundAddress, onInvested }: Props) {
       // Best-effort: if this investment crossed the goal, close funding now
       // so the club receives the raised USD₮ immediately. A failure here
       // never blocks the fan's own successful investment.
-      fetch(`/api/rounds/${roundId}/close-check`, { method: "POST" }).catch(() => {});
+      closeCheck.mutateAsync().catch(() => {});
 
       toast.success("Investment confirmed!", { id: toastId });
       setStatus("done");
