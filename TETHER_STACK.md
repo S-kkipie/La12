@@ -4,8 +4,9 @@
 club in USD₮, hold an ERC-20 share, and claim pro-rata revenue, all from a **self-custody** wallet.
 The instrument is economic rights (revenue-share), **not equity** — no custody, no securities.
 
-> **Permalinks:** links below point at `main`. Before final submission we pin them to the submission
-> commit (open the file on GitHub, press `y`). File + line ranges are exact as of the linked commit.
+> **Permalinks:** every link below is **commit-pinned** to `5fa556d` (the submission commit) — not a
+> mutable branch — so the file + line ranges stay exact no matter what lands afterward. Each range was
+> re-validated against that commit's blob.
 
 Each piece follows the same shape the judges asked for: **What · Why we chose it · How we wired it
 · Trade-off we accepted.**
@@ -25,9 +26,9 @@ hand-rolling key management.
 non-extractable per-device `CryptoKey`**, and stored in IndexedDB — it never leaves the browser and
 the server never sees it. Wallets are **namespaced per Better-Auth `userId`** so a club and a fan
 signing in on the same browser never share a wallet.
-- Encryption + non-extractable device key: [`web/src/lib/wdk.ts#L47-L79`](https://github.com/S-kkipie/La12/blob/main/web/src/lib/wdk.ts#L47-L79)
-- Create/persist, per-user keying: [`web/src/lib/wdk.ts#L125-L136`](https://github.com/S-kkipie/La12/blob/main/web/src/lib/wdk.ts#L125-L136)
-- Browser-only KV store: [`web/src/lib/storage.ts`](https://github.com/S-kkipie/La12/blob/main/web/src/lib/storage.ts)
+- Encryption + non-extractable device key: [`web/src/lib/wdk.ts#L47-L79`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/lib/wdk.ts#L47-L79)
+- Create/persist, per-user keying: [`web/src/lib/wdk.ts#L125-L136`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/lib/wdk.ts#L125-L136)
+- Browser-only KV store: [`web/src/lib/storage.ts`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/lib/storage.ts)
 
 **Trade-off.** A non-extractable device key means the seed is bound to that browser profile — great for
 custody, but recovery needs an explicit export/import flow (roadmap: WDK social recovery via ERC-4337).
@@ -46,7 +47,7 @@ deliberately never exposes the raw private key (memory-safe), so we bridge inste
 
 **How.** `signer()` builds a viem `LocalAccount` whose `signMessage`/`signTransaction`/`signTypedData`
 delegate to the WDK account's own signing methods — the raw key is never materialized in JS.
-- [`web/src/lib/wdk.ts#L165-L232`](https://github.com/S-kkipie/La12/blob/main/web/src/lib/wdk.ts#L165-L232)
+- [`web/src/lib/wdk.ts#L165-L232`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/lib/wdk.ts#L165-L232)
 
 **Trade-off.** Delegated signing means adapting viem's transaction union to WDK's `EvmTransaction`
 shape (a narrow cast at the boundary) rather than a one-line `privateKeyToAccount`. Worth it — the key
@@ -64,7 +65,7 @@ gives us `transfer`/`getTokenBalance` for USD₮ (6-decimals, base-unit `bigint`
 **How.** A single `WalletHandle` (`getWallet(userId)`) hides the standard-EOA vs smart-account
 difference so components and `contracts.ts` never branch on mode; `transferUsdt`/`getUsdtBalance`
 route through the WDK account.
-- [`web/src/lib/wdk.ts#L256-L341`](https://github.com/S-kkipie/La12/blob/main/web/src/lib/wdk.ts#L256-L341)
+- [`web/src/lib/wdk.ts#L256-L341`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/lib/wdk.ts#L256-L341)
 
 **Trade-off.** Amounts are always base-unit `bigint` end-to-end (strings on the wire) — more ceremony
 than floats, but no precision loss on money. Fiat is display-only (see §7).
@@ -83,8 +84,8 @@ own ETH, never the fan's key. (ERC-4337 gas-in-USD₮ is the mainnet path; see �
 round's own permissionless close. **The relayer key is a real funded account, so an unthrottled faucet
 is a drain vector** — every faucet endpoint is rate-limited **per address, per endpoint** (independent
 gas vs test-USD₮ buckets), 1 call/hour.
-- Relayer, own-ETH-only: [`web/src/lib/sponsor.ts#L19-L61`](https://github.com/S-kkipie/La12/blob/main/web/src/lib/sponsor.ts#L19-L61)
-- Per-endpoint rate limiter (drain defense): [`web/src/core/ops/server/rate-limit.ts`](https://github.com/S-kkipie/La12/blob/main/web/src/core/ops/server/rate-limit.ts)
+- Relayer, own-ETH-only: [`web/src/lib/sponsor.ts#L19-L61`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/lib/sponsor.ts#L19-L61)
+- Per-endpoint rate limiter (drain defense): [`web/src/core/ops/server/rate-limit.ts`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/core/ops/server/rate-limit.ts)
 
 **Trade-off.** The in-memory limiter resets on restart and isn't shared across instances — fine for a
 single-node demo box; we documented the swap to Redis/DB before horizontal scaling. We chose the simple
@@ -102,7 +103,7 @@ Indexer is the right tool for cross-block history.
 **How.** REST call to `wdk-api.tether.io` with `x-api-key` (server-only), with a **graceful fallback to
 viem `getLogs`** (40k-block window, from/to queried separately then de-duped) so Activity is **never
 empty** even without an Indexer key on Sepolia. Tolerant field-mapping because payload shapes vary.
-- Indexer + fallback + dedupe: [`web/src/lib/indexer.ts#L98-L162`](https://github.com/S-kkipie/La12/blob/main/web/src/lib/indexer.ts#L98-L162)
+- Indexer + fallback + dedupe: [`web/src/lib/indexer.ts#L98-L162`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/lib/indexer.ts#L98-L162)
 
 **Trade-off.** The RPC fallback under-counts on very old rounds (the block window), which we accept as a
 degradation path, not the primary — documented and demo-safe.
@@ -121,8 +122,8 @@ delivers exactly that; keeping `standard` mode preserves a zero-dependency local
 **UserOperation** (arbitrary contract calldata verified against the installed package's types), and we
 poll the bundler's own receipt endpoint for the real L1 tx hash so every downstream caller keeps using
 plain viem receipt-waiting unchanged.
-- Dual-mode handle + UserOp path: [`web/src/lib/wdk.ts#L234-L341`](https://github.com/S-kkipie/La12/blob/main/web/src/lib/wdk.ts#L234-L341)
-- Mode/paymaster config (fail-loud env): [`web/src/lib/walletMode.ts`](https://github.com/S-kkipie/La12/blob/main/web/src/lib/walletMode.ts)
+- Dual-mode handle + UserOp path: [`web/src/lib/wdk.ts#L234-L341`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/lib/wdk.ts#L234-L341)
+- Mode/paymaster config (fail-loud env): [`web/src/lib/walletMode.ts`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/lib/walletMode.ts)
 
 **Trade-off.** Live gasless proof on Sepolia is gated on paymaster provisioning (Candide token
 paymaster); the code path is complete and type-verified, the hosted proof is the remaining step. We
@@ -141,7 +142,7 @@ backed) gives real rates without us running a price feed.
 selector. **USD short-circuits to 1.0 (the peg baseline); any upstream miss degrades to 1.0 with a
 `source:"fallback"` marker** shown as `≈` — never a fabricated foreign rate. Conversion is display-only
 (`Number()` on a `bigint`, never fed back into money math).
-- Design + contract: [`docs/superpowers/specs/2026-07-12-p7-pricing-slice-design.md`](https://github.com/S-kkipie/La12/blob/main/docs/superpowers/specs/2026-07-12-p7-pricing-slice-design.md)
+- Design + contract: [`docs/superpowers/specs/2026-07-12-p7-pricing-slice-design.md`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/docs/superpowers/specs/2026-07-12-p7-pricing-slice-design.md)
 
 **Trade-off.** USD₮≈USD, so fiat is **UX polish, not money math** — which is exactly why the failure mode
 is "show USD" rather than block the page. (Landing this cycle; until then `lib/pricing.ts` is a 1:1
@@ -157,7 +158,7 @@ stub, honestly labeled.)
 
 **How.** Builds a MoonPay widget URL **HMAC-signed server-side** with `MOONPAY_SECRET_KEY` (required for
 a production widget); the secret never reaches the client.
-- [`web/src/lib/moonpay.ts`](https://github.com/S-kkipie/La12/blob/main/web/src/lib/moonpay.ts)
+- [`web/src/lib/moonpay.ts`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/lib/moonpay.ts)
 
 **Trade-off.** Signed URL over a fuller SDK embed — fastest correct integration for the demo; deeper
 webhook reconciliation is roadmap.
@@ -170,7 +171,7 @@ webhook reconciliation is roadmap.
 
 **How.** Mirrors the sponsor relayer (same server-only key, never the fan's), against `MockUSDT.mint()`;
 rate-limited by the same per-endpoint bucket as gas (§4).
-- [`web/src/lib/faucetUsdt.ts`](https://github.com/S-kkipie/La12/blob/main/web/src/lib/faucetUsdt.ts)
+- [`web/src/lib/faucetUsdt.ts`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/lib/faucetUsdt.ts)
 
 ---
 
@@ -195,9 +196,9 @@ imported it."
 - **Permissionless-factory defense** — anyone can deploy a round via the factory, so `createRound`
   **independently re-verifies on-chain that the round's `club()` equals the caller's address** before
   the DB ever marks it verified; the insert is unreachable without a passing check.
-  [`web/src/core/rounds/server/services/create-round-service.ts#L37-L47`](https://github.com/S-kkipie/La12/blob/main/web/src/core/rounds/server/services/create-round-service.ts#L37-L47)
+  [`web/src/core/rounds/server/services/create-round-service.ts#L37-L47`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/web/src/core/rounds/server/services/create-round-service.ts#L37-L47)
 - **Claim-based dividend contract** — `RevenueShareRound` (30/30 Foundry tests): `invest` → `closeFunding`
   → `distribute` → **pull-based `claim`/`pendingReward`** (magnified-dividend pattern, no push loops).
-  [`contracts/src/RevenueShareRound.sol#L246-L261`](https://github.com/S-kkipie/La12/blob/main/contracts/src/RevenueShareRound.sol#L246-L261)
+  [`contracts/src/RevenueShareRound.sol#L246-L266`](https://github.com/S-kkipie/La12/blob/5fa556d386a51caefa63ed294ab01791e9f19690/contracts/src/RevenueShareRound.sol#L246-L266)
 - **Money truth on-chain** — SQLite/Postgres is UX/cache only; every balance/position is read from the
   chain, never trusted from the DB.

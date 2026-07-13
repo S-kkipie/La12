@@ -150,7 +150,7 @@ on-chain, transparente, self-custody.
 - **USD₮** — unidad de cuenta de todo (funding, repartos, retiros). 6 decimales.
 - **Smart contract** revenue-share — Solidity + OpenZeppelin (Foundry). Share = ERC-20, reparto
   claim-based (dividend accumulator). Chain: **EVM / Sepolia**.
-- **Frontend** — Next.js (App Router, TS, Tailwind) + SQLite (Drizzle) + viem. Gas sponsor server-side.
+- **Frontend** — Next.js (App Router, TS, Tailwind) + Postgres (Drizzle) + viem. Gas sponsor server-side.
 
 Diseño completo: `docs/superpowers/specs/2026-07-05-la-doce-scaffold-design.md`.
 Notas de la API de WDK: `docs/wdk-reference.md`. Convenciones: `CLAUDE.md`.
@@ -165,25 +165,44 @@ docs/        spec de diseño + referencia WDK
 
 ## Cómo correr
 
-Requisitos: Node 20+, pnpm 10, [Foundry](https://getfoundry.sh) (`curl -L https://foundry.paradigm.xyz | bash && foundryup`).
+Requisitos: **Node 20+**, **pnpm 10**, **Docker** (Postgres), [Foundry](https://getfoundry.sh)
+(`curl -L https://foundry.paradigm.xyz | bash && foundryup`). Probado con Node 24 / pnpm 10.
 
 ```bash
-# 1. deps
+# 1. deps (monorepo pnpm: web + packages/*)
 pnpm install
 
 # 2. contratos — build + tests (30/30)
 pnpm contracts:build
 pnpm contracts:test
 
-# 3. web — DB local + dev server
-cp web/.env.example web/.env.local     # ajustar si vas a testnet real (RPC key, USDT addr, SPONSOR_PK)
-pnpm --filter web db:seed              # crea SQLite + club/ronda demo
-pnpm web                               # http://localhost:3000
+# 3. base de datos — Postgres local en Docker
+cd web && docker compose up -d          # levanta ladoce-pg (postgres:16) en :5432
+cd ..
+
+# 4. env de web
+cp web/.env.example web/.env.local      # DATABASE_URL ya apunta al Postgres de arriba
+#   Genera el secreto de auth (obligatorio):
+#     openssl rand -base64 32   → pégalo en BETTER_AUTH_SECRET
+#   Todo lo demás (RPC, USDT addr, SPONSOR_PK, MoonPay/Indexer keys) es opcional:
+#   cada integración degrada limpio si falta el env (ver TODO(wire) en lib/*.ts).
+
+# 5. schema + datos demo
+pnpm --filter web db:push               # crea las tablas en Postgres (Drizzle)
+pnpm --filter web db:seed               # club + ronda demo
+
+# 6. dev server
+pnpm web                                # http://localhost:3000
 
 # (opcional) deploy a Sepolia:
 cp contracts/.env.example contracts/.env
 cd contracts && forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast
 ```
+
+**Demo en vivo (sin instalar nada):** https://la12.aido.lat — corre en `erc4337` gasless sobre
+Sepolia con bundler + paymaster Candide reales; el hincha paga el gas en USD₮, cero ETH. Para
+fondear tu wallet de prueba: crea una cuenta fan, copia tu address de `/wallet`, y mintea test
+USD₮ desde `dashboard.candide.dev/faucet`.
 
 ### Demo 100% local (anvil — sin testnet, sin claves)
 
@@ -192,14 +211,16 @@ Loop real invest→distribute→claim sobre una cadena local:
 ```bash
 pnpm install
 anvil &                                                   # EVM local :8545 (chainId 31337)
+cd web && docker compose up -d && cd ..                   # Postgres para los datos off-chain
+cp web/.env.example web/.env.local                        # + genera BETTER_AUTH_SECRET (ver arriba)
 
 # deploy MockUSDT + RoundFactory + ronda demo (usa la dev key #0 de anvil)
 cd contracts && forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 # anota: MockUSDT, RoundFactory y "Demo round" del output
 
 # apuntar web a anvil + esas addresses:
-#   web/.env.local -> NEXT_PUBLIC_RPC_URL=http://127.0.0.1:8545, NEXT_PUBLIC_CHAIN_ID=31337,
-#   NEXT_PUBLIC_USDT_ADDRESS=<MockUSDT>, SPONSOR_PK=<anvil #0>
+#   web/.env.local -> NEXT_PUBLIC_WALLET_MODE=standard, NEXT_PUBLIC_RPC_URL=http://127.0.0.1:8545,
+#   NEXT_PUBLIC_CHAIN_ID=31337, NEXT_PUBLIC_USDT_ADDRESS=<MockUSDT>, SPONSOR_PK=<anvil #0>
 #   y seed con la ronda deployada:
 cd ../web
 DEMO_ROUND_ADDRESS=<Demo round> DEMO_CLUB_WALLET=<Deployer> pnpm db:push && \
