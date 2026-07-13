@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { createWallet, getWallet } from "@/lib/wdk";
 import { walletMode } from "@/lib/walletMode";
 import { useAccount } from "./hooks";
+import { useOps } from "@/core/ops/client/hooks";
 
 /**
  * Returns an imperative `ensureWallet(userId)` callback (a bare fn can't call
@@ -13,11 +14,11 @@ import { useAccount } from "./hooks";
  *
  * A freshly minted wallet (isNew) has 0 ETH, so in `standard` mode its first
  * invest/approve would fail with "insufficient funds for gas" — best-effort
- * fund it via the gas sponsor (/api/faucet). Deliberately best-effort: on a
- * real testnet without SPONSOR_PK (or a dry relayer) it fails silently past a
- * soft toast, since the "Get gas ETH" button in /wallet is the fallback either
- * way. Skipped in `erc4337` mode (that wallet pays gas in USD₮ via the
- * paymaster and never needs ETH).
+ * fund it via the gas sponsor (POST /ops/faucet, P6). Deliberately
+ * best-effort: on a real testnet without SPONSOR_PK (or a dry relayer) it
+ * degrades to a soft toast, since the "Get gas ETH" button in /wallet is the
+ * fallback either way. Skipped in `erc4337` mode (that wallet pays gas in
+ * USD₮ via the paymaster and never needs ETH).
  *
  * TODO(wire): only recovers the wallet on the SAME device that created it —
  * the seed never leaves the device by design (self-custody), so a fresh login
@@ -32,6 +33,8 @@ import { useAccount } from "./hooks";
 export function useEnsureWallet() {
   const { useLinkWallet } = useAccount();
   const linkWallet = useLinkWallet();
+  const { useFundGas } = useOps();
+  const fundGas = useFundGas();
 
   return async function ensureWallet(userId: string): Promise<string> {
     const { isNew } = await createWallet(userId);
@@ -48,24 +51,22 @@ export function useEnsureWallet() {
     }
 
     if (isNew && walletMode() === "standard") {
-      await fundGasBestEffort(wallet.address); // ops(P6) — legacy /api/faucet, unchanged
+      await fundGasBestEffort(wallet.address, fundGas.mutateAsync);
     }
     return wallet.address;
   };
 }
 
-async function fundGasBestEffort(address: string): Promise<void> {
+async function fundGasBestEffort(
+  address: string,
+  mutateFundGas: (body: { address: string }) => Promise<{
+    response: { hash: string } | { skipped: true; reason: string };
+  }>,
+): Promise<void> {
   try {
-    const res = await fetch("/api/faucet", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ address }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      toast.warning(
-        data.error ?? "No se pudo cubrir el gas automáticamente — usá 'Conseguir ETH de gas' en tu billetera.",
-      );
+    const result = await mutateFundGas({ address });
+    if ("skipped" in result.response) {
+      toast.warning(result.response.reason);
     }
   } catch {
     toast.warning(
