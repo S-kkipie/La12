@@ -42,8 +42,14 @@ export function ClubOverview({
   }, [usdtAddress]);
 
   const refresh = useCallback(() => {
-    void overviewQuery.refetch();
-    void distributionsQuery.refetch();
+    const run = () => {
+      void overviewQuery.refetch();
+      void distributionsQuery.refetch();
+    };
+    run();
+    // Distribution logs (revenue chart + cap progress) can trail a just-confirmed
+    // distribute/close by ~a block; settle once more shortly so no manual reload.
+    window.setTimeout(run, 3000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

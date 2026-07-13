@@ -11,7 +11,7 @@ export const useRounds = () => {
   const queryClient = useQueryClient();
 
   const useList = (query: { clubId?: number; all?: string } = {}) =>
-    useQuery(elysia.rounds.get.queryOptions({ query }));
+    useQuery(elysia.rounds.get.queryOptions(query));
 
   const useCreate = () =>
     useMutation(

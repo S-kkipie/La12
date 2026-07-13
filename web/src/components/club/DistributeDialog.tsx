@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useCurrentUserId } from "@/frontend/auth/auth";
 import { getWallet } from "@/lib/wdk";
@@ -22,6 +22,14 @@ function safeParseUsdt(input: string): bigint | null {
   }
 }
 
+/** Base units → a comma-free decimal string safe to drop into a number input
+ *  (formatUsdt adds thousands separators, which a number input rejects). */
+function toAmountInput(base: bigint): string {
+  const whole = base / 1_000_000n;
+  const frac = (base % 1_000_000n).toString().padStart(6, "0").replace(/0+$/, "");
+  return frac ? `${whole}.${frac}` : whole.toString();
+}
+
 export function DistributeDialog({
   open,
   onOpenChange,
@@ -38,9 +46,42 @@ export function DistributeDialog({
   const [step, setStep] = useState<"form" | "review">("form");
   const [busy, setBusy] = useState(false);
 
+  const [balance, setBalance] = useState<bigint | null>(null);
+
   const parsed = safeParseUsdt(amount);
   const value = parsed ?? 0n;
   const validAmount = parsed !== null && parsed > 0n;
+
+  // Read the club's spendable USD₮ when the dialog opens — distribute pulls it
+  // from this wallet, so an input above it would revert at safeTransferFrom.
+  useEffect(() => {
+    if (!open || !userId) { setBalance(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const w = await getWallet(userId);
+        const b = await w.getUsdtBalance();
+        if (!cancelled) setBalance(b);
+      } catch {
+        if (!cancelled) setBalance(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, userId]);
+
+  // Revenue split preview — mirrors the contract's distribute() exactly:
+  // holderCut = revenueBps% of input; credited is clamped to the remaining cap
+  // room (capMultiple × raised − already distributed); the rest refunds to you.
+  const cap = (round.raised * BigInt(round.capMultiple)) / 10_000n;
+  const room = cap > round.distributed ? cap - round.distributed : 0n;
+  const holderCut = (value * BigInt(round.revenueBps)) / 10_000n;
+  const credited = holderCut > room ? room : holderCut;
+  const refund = value > credited ? value - credited : 0n;
+  const overBalance = balance !== null && value > balance;
+  // Most revenue worth entering: enough to fill the cap room, capped by balance.
+  const revenueToFillCap = room === 0n ? 0n : (room * 10_000n) / BigInt(round.revenueBps);
+  const maxRevenue = balance !== null && balance < revenueToFillCap ? balance : revenueToFillCap;
+  const canReview = validAmount && !overBalance && room > 0n;
 
   function reset() {
     setStep("form");
@@ -87,16 +128,45 @@ export function DistributeDialog({
 
         {step === "form" ? (
           <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Your balance: {balance === null ? "…" : `${formatUsdt(balance)} USD₮`}</span>
+              <span>Cap room: {formatUsdt(room)} USD₮ left</span>
+            </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="dist-amount">Revenue to distribute (USD₮)</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="dist-amount">Revenue to distribute (USD₮)</Label>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-primary hover:underline disabled:opacity-40"
+                  disabled={maxRevenue === 0n}
+                  onClick={() => setAmount(toAmountInput(maxRevenue))}
+                >
+                  Max
+                </button>
+              </div>
               <Input id="dist-amount" type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
               {amount !== "" && !validAmount && <span className="text-xs text-destructive">Enter a valid amount.</span>}
-              <span className="text-xs text-muted-foreground">
-                Holders receive {round.revenueBps / 100}% of revenue, up to the round&apos;s cap.
-              </span>
+              {overBalance && (
+                <span className="text-xs text-destructive">Not enough USD₮ — you have {formatUsdt(balance ?? 0n)}.</span>
+              )}
+              {room === 0n && (
+                <span className="text-xs text-destructive">Cap reached — holders can&apos;t receive more from this round.</span>
+              )}
+              {canReview && (
+                <div className="mt-1 rounded-md bg-secondary/40 p-2.5 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Holders receive ({round.revenueBps / 100}%)</span>
+                    <span className="font-medium text-primary">{formatUsdt(credited)} USD₮</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Refunds to you</span>
+                    <span className="font-medium">{formatUsdt(refund)} USD₮</span>
+                  </div>
+                </div>
+              )}
             </div>
             <DialogFooter>
-              <Button disabled={!validAmount} onClick={() => setStep("review")}>Review</Button>
+              <Button disabled={!canReview} onClick={() => setStep("review")}>Review</Button>
             </DialogFooter>
           </div>
         ) : (

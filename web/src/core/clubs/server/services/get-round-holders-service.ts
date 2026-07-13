@@ -20,7 +20,11 @@ export async function getRoundHoldersForClub(deps: HoldersDeps): AsyncAppResult<
   if (!owned) return err(AppErrors.forbidden());
   try {
     return ok(await deps.getRoundHolders(deps.contractAddress as `0x${string}`));
-  } catch {
+  } catch (err) {
+    // Graceful-empty (never 500) — but DON'T swallow silently: a dead RPC or one
+    // that rejects eth_getLogs (e.g. publicnode's archive gating) would otherwise
+    // return an empty cap-table indistinguishable from a round with no backers.
+    console.error(`[holders] getRoundHolders failed for ${deps.contractAddress}:`, err);
     return ok([]);
   }
 }

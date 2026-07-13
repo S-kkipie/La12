@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUserId } from "@/frontend/auth/auth";
-import { useElysia } from "@/frontend/lib/eden";
 import { createWallet, getWallet, type WalletHandle } from "@/lib/wdk";
 import { friendlyError } from "@/lib/txError";
 import { useWalletPositions, useWalletHistory } from "@/core/wallet/client/hooks";
@@ -24,8 +22,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function WalletOverview() {
   const { userId } = useCurrentUserId();
   const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
-  const walletProxy = useElysia().wallet;
 
   // Display currency + its USD₮→fiat rate — one page-level fetch, threaded into
   // the balance + position cards. Rates are display-only; money stays USD₮.
@@ -74,10 +70,22 @@ export function WalletOverview() {
   const error = walletError; // read failures degrade to empty per the API contract
 
   const refetchWallet = () => {
-    queryClient.invalidateQueries({ queryKey: walletProxy.positions.get.queryKey() });
-    queryClient.invalidateQueries({ queryKey: walletProxy.history.get.queryKey() });
-    // Re-read the on-chain USD₮ balance too — a claim/send/add-funds changed it.
-    if (wallet) void wallet.getUsdtBalance().then(setBalance).catch(() => {});
+    const rereadBalance = () => {
+      // Re-read the on-chain USD₮ balance — a claim/send/add-funds changed it.
+      if (wallet) void wallet.getUsdtBalance().then(setBalance).catch(() => {});
+    };
+    // Refetch the exact position/history queries directly — invalidateQueries by
+    // key didn't reliably retrigger these, so a claim left stale numbers until reload.
+    void posQuery.refetch();
+    void histQuery.refetch();
+    rereadBalance();
+    // The USD₮ transfer history (indexer/RPC-log backed) and balance can trail a
+    // just-confirmed tx by ~a block; settle once more shortly so no manual reload.
+    window.setTimeout(() => {
+      void posQuery.refetch();
+      void histQuery.refetch();
+      rereadBalance();
+    }, 3000);
   };
 
   if (loading) {

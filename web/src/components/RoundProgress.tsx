@@ -9,6 +9,9 @@ type Props = {
   revenueBps: number;
   deadline: Date;
   status: "funding" | "active" | "closed";
+  /** Lifetime USD₮ credited to holders. When present on a non-funding round the
+   *  header swaps the (now-irrelevant) funding deadline for cap progress. */
+  distributed?: bigint;
 };
 
 const STATUS_LABEL: Record<Props["status"], string> = {
@@ -18,15 +21,23 @@ const STATUS_LABEL: Record<Props["status"], string> = {
 };
 
 /** Pure display component — safe to render from a Server Component. */
-export function RoundProgress({ raised, goal, capMultiple, revenueBps, deadline, status }: Props) {
+export function RoundProgress({ raised, goal, capMultiple, revenueBps, deadline, status, distributed }: Props) {
   const pct = goal > 0n ? Math.min(100, Number((raised * 100n) / goal)) : 0;
+
+  // Funding closed the moment a round leaves "funding" (raised is swept to the
+  // club), so its deadline is stale on Active/Closed rounds — show how much of
+  // the revenue cap has been paid to holders instead.
+  const cap = (raised * BigInt(capMultiple)) / 10_000n;
+  const showDistribution = status !== "funding" && distributed !== undefined;
 
   return (
     <Card className="glow w-full p-5">
       <div className="mb-2 flex items-center justify-between text-sm">
         <Badge className="border-transparent bg-primary/15 text-primary">{STATUS_LABEL[status]}</Badge>
         <span className="text-muted-foreground">
-          Closes {deadline.toLocaleDateString("en-US")}
+          {showDistribution
+            ? `Distributed ${formatUsdt(distributed)} / ${formatUsdt(cap)} USD₮`
+            : `Closes ${deadline.toLocaleDateString("en-US")}`}
         </span>
       </div>
 

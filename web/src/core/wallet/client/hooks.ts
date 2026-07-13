@@ -7,7 +7,7 @@ import { parsePosition, parseHistoryEntry } from "@/core/wallet/domain/types";
 export function useWalletPositions(address?: string) {
   const wallet = useElysia().wallet;
   return useQuery({
-    ...wallet.positions.get.queryOptions({ query: { address: address ?? "" } }),
+    ...wallet.positions.get.queryOptions({ address: address ?? "" }),
     enabled: !!address,
     select: (data) => (data.response ?? []).map(parsePosition),
   });
@@ -17,7 +17,7 @@ export function useWalletPositions(address?: string) {
 export function useWalletHistory(address?: string) {
   const wallet = useElysia().wallet;
   return useQuery({
-    ...wallet.history.get.queryOptions({ query: { address: address ?? "" } }),
+    ...wallet.history.get.queryOptions({ address: address ?? "" }),
     enabled: !!address,
     select: (data) => (data.response ?? []).map(parseHistoryEntry),
   });

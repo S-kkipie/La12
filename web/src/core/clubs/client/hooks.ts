@@ -34,7 +34,7 @@ export const useClubs = () => {
 
   const useHolders = (round?: string) =>
     useQuery({
-      ...elysia.holders.get.queryOptions({ query: { round: round ?? "" } }),
+      ...elysia.holders.get.queryOptions({ round: round ?? "" }),
       enabled: !!round,
       select: (data) => data.response.map(parseHolder),
     });

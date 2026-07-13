@@ -28,11 +28,11 @@ export function CloseRoundDialog({
   async function handleClose() {
     if (!userId) return;
     setBusy(true);
-    const toastId = toast.loading("Closing round…");
+    const toastId = toast.loading("Ending round…");
     try {
       const wallet = await getWallet(userId);
       const hash = await closeRound(wallet, round.contractAddress);
-      toast.success("Round closed", {
+      toast.success("Round ended", {
         id: toastId,
         action: { label: "View", onClick: () => window.open(explorerTxUrl(hash), "_blank", "noopener,noreferrer") },
       });
@@ -49,16 +49,17 @@ export function CloseRoundDialog({
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setBusy(false); }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Close round</DialogTitle>
+          <DialogTitle>End round</DialogTitle>
           <DialogDescription>
-            This retires {round.name} for good. No further distributions can be sent — holders
-            keep whatever they&apos;ve already accrued and can still claim it. This can&apos;t be undone.
+            This ends {round.name} for good (funding already closed when it went Active — this is
+            the final retire). No further distributions can be sent — holders keep whatever
+            they&apos;ve already accrued and can still claim it. This can&apos;t be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>
           <Button variant="destructive" onClick={handleClose} disabled={busy}>
-            {busy ? "Closing…" : "Close round"}
+            {busy ? "Ending…" : "End round"}
           </Button>
         </DialogFooter>
       </DialogContent>

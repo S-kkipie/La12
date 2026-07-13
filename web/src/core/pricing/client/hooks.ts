@@ -10,7 +10,7 @@ export const usePricing = () => {
 
   const useRate = (currency: SupportedCurrency) =>
     useQuery({
-      ...elysia.rate.get.queryOptions({ query: { currency } }),
+      ...elysia.rate.get.queryOptions({ currency }),
       select: (data) => parseRate(data.response),
     });
 
