@@ -22,7 +22,7 @@ export default async function DashboardPage() {
 
   const [club] = await db.select().from(clubs).where(eq(clubs.userId, session.user.id));
   if (!club) {
-    // Self-heal an interrupted signup (see lib/ensureWallet.ts): create+link
+    // Self-heal an interrupted signup (see core/account/client/use-ensure-wallet.ts): create+link
     // this account's wallet, then refresh so `club` resolves above.
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">

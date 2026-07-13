@@ -48,7 +48,7 @@ export function useEnsureWallet() {
     }
 
     if (isNew && walletMode() === "standard") {
-      await fundGasBestEffort(wallet.address);
+      await fundGasBestEffort(wallet.address); // ops(P6) — legacy /api/faucet, unchanged
     }
     return wallet.address;
   };
