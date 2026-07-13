@@ -1,6 +1,6 @@
 import { test, after } from "node:test";
 import assert from "node:assert";
-import { eq } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { user, clubs, profiles } from "@/db/schema";
 import { upsertClubWallet } from "../upsert-club-wallet";
@@ -40,6 +40,11 @@ test("upsertClubWallet: inserts (unique slug on collision) then updates in place
   const [row2] = await db.select().from(clubs).where(eq(clubs.id, second.id));
   assert.strictEqual(row2.walletAddress, ADDR_B);
   assert.strictEqual(row2.slug, "deportivo-san-martin-2");
+
+  // Atomicity proof: exactly one row exists for this userId — the onConflict
+  // path updated in place rather than inserting a second row.
+  const [{ value: clubCount }] = await db.select({ value: count() }).from(clubs).where(eq(clubs.userId, CLUB_USER));
+  assert.strictEqual(clubCount, 1);
 });
 
 test("upsertProfileWallet: inserts with displayName then updates address in place", async () => {
@@ -54,4 +59,9 @@ test("upsertProfileWallet: inserts with displayName then updates address in plac
   assert.strictEqual(second.id, first.id);
   const [row2] = await db.select().from(profiles).where(eq(profiles.id, second.id));
   assert.strictEqual(row2.walletAddress, ADDR_B);
+
+  // Atomicity proof: exactly one row exists for this userId — the onConflict
+  // path updated in place rather than inserting a second row.
+  const [{ value: profileCount }] = await db.select({ value: count() }).from(profiles).where(eq(profiles.userId, FAN_USER));
+  assert.strictEqual(profileCount, 1);
 });

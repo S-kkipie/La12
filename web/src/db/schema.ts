@@ -75,7 +75,9 @@ export const verification = pgTable(
 export const clubs = pgTable("clubs", {
   id: serial("id").primaryKey(),
   // Nullable: the seeded demo club predates auth. New clubs set this at /signup.
-  userId: text("user_id").references(() => user.id),
+  // UNIQUE: one club per user — NULLs stay distinct in Postgres, so the seeded
+  // null-userId club is unaffected. Enables atomic onConflictDoUpdate upserts.
+  userId: text("user_id").references(() => user.id).unique(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   logoUrl: text("logo_url"),
@@ -101,7 +103,9 @@ export const rounds = pgTable("rounds", {
 
 export const profiles = pgTable("profiles", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").references(() => user.id),
+  // UNIQUE: one profile per user — NULLs stay distinct in Postgres. Enables
+  // atomic onConflictDoUpdate upserts.
+  userId: text("user_id").references(() => user.id).unique(),
   walletAddress: text("wallet_address").notNull().unique(),
   displayName: text("display_name"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),

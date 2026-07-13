@@ -1,27 +1,19 @@
 import "server-only";
-import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { profiles } from "@/db/schema";
 
-/** Upsert the caller's profile row by userId, setting walletAddress.
- *  `displayName` seeded from `name` on insert. Returns the row id. */
+/** Atomically upsert the caller's profile row by userId, setting walletAddress.
+ *  UNIQUE(profiles.userId) makes concurrent calls for one user conflict-update
+ *  in place instead of creating a second row. `displayName` seeded on insert. */
 export async function upsertProfileWallet(
   userId: string,
   name: string,
   walletAddress: string,
 ): Promise<{ id: number }> {
-  const [existing] = await db.select().from(profiles).where(eq(profiles.userId, userId));
-  if (existing) {
-    const [updated] = await db
-      .update(profiles)
-      .set({ walletAddress })
-      .where(eq(profiles.id, existing.id))
-      .returning({ id: profiles.id });
-    return updated;
-  }
-  const [profile] = await db
+  const [row] = await db
     .insert(profiles)
     .values({ userId, walletAddress, displayName: name })
+    .onConflictDoUpdate({ target: profiles.userId, set: { walletAddress } })
     .returning({ id: profiles.id });
-  return profile;
+  return row;
 }
