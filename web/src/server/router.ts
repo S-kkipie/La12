@@ -16,6 +16,7 @@ import {
 import { walletRouter } from "@/core/wallet/server/api/router";
 import { accountRouter } from "@/core/account/server/api/router";
 import { directoryRouter } from "@/core/directory/server/api/router";
+import { opsRouter } from "@/core/ops/server/api/router";
 
 const apiErrorLogger = getLogger(["server", "error"]);
 
@@ -91,7 +92,8 @@ const app = new Elysia({ prefix: "/api/v1" })
   })
   .use(walletRouter)
   .use(accountRouter)
-  .use(directoryRouter);
+  .use(directoryRouter)
+  .use(opsRouter);
 
 export default app;
 export type AppRouter = typeof app;
