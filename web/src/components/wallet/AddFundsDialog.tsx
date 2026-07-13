@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { walletMode } from "@/lib/walletMode";
 import { friendlyError } from "@/lib/txError";
+import { useOps } from "@/core/ops/client/hooks";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -19,20 +20,18 @@ export function AddFundsDialog({
   onFunded?: () => void;
 }) {
   const [busy, setBusy] = useState<"moonpay" | "usdt" | "gas" | null>(null);
+  const { useFundGas, useMintUsdt, useMoonpay } = useOps();
+  const fundGas = useFundGas();
+  const mintUsdt = useMintUsdt();
+  const moonpay = useMoonpay();
 
-  async function moonpay() {
+  async function openMoonpay() {
     setBusy("moonpay");
     try {
-      const res = await fetch("/api/moonpay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, amountUsd: 50 }),
-      });
-      const data = await res.json();
-      if (!res.ok) return toast.error(data.error ?? "Could not open MoonPay.");
-      window.open(data.widgetUrl, "_blank", "noopener,noreferrer");
-    } catch (err) {
-      toast.error(friendlyError(err));
+      const result = await moonpay.mutateAsync({ address, amountUsd: 50 });
+      window.open(result.response.widgetUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Could not open MoonPay.");
     } finally {
       setBusy(null);
     }
@@ -40,18 +39,15 @@ export function AddFundsDialog({
 
   async function faucet(kind: "usdt" | "gas") {
     setBusy(kind);
-    const path = kind === "usdt" ? "/api/faucet-usdt" : "/api/faucet";
     const toastId = toast.loading(kind === "usdt" ? "Getting test USD₮…" : "Getting gas ETH…");
     try {
-      const res = await fetch(path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address }),
-      });
-      const data = await res.json();
-      if (!res.ok) return toast.error(data.error ?? "Could not get funds.", { id: toastId });
-      toast.success(kind === "usdt" ? "Test USD₮ received" : "Gas ETH received", { id: toastId });
-      onFunded?.();
+      const result = kind === "usdt" ? await mintUsdt.mutateAsync({ address }) : await fundGas.mutateAsync({ address });
+      if ("skipped" in result.response) {
+        toast.warning(result.response.reason, { id: toastId });
+      } else {
+        toast.success(kind === "usdt" ? "Test USD₮ received" : "Gas ETH received", { id: toastId });
+        onFunded?.();
+      }
     } catch (err) {
       toast.error(friendlyError(err), { id: toastId });
     } finally {
@@ -67,7 +63,7 @@ export function AddFundsDialog({
           <DialogDescription>Buy USD₮ with a card, straight to your self-custody wallet.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
-          <Button onClick={moonpay} disabled={busy !== null}>
+          <Button onClick={openMoonpay} disabled={busy !== null}>
             {busy === "moonpay" ? "Opening MoonPay…" : "Buy with MoonPay"}
           </Button>
           {walletMode() === "standard" && (

@@ -17,6 +17,8 @@ import { walletRouter } from "@/core/wallet/server/api/router";
 import { accountRouter } from "@/core/account/server/api/router";
 import { clubsRouter } from "@/core/clubs/server/api/router";
 import { roundsRouter } from "@/core/rounds/server/api/router";
+import { directoryRouter } from "@/core/directory/server/api/router";
+import { opsRouter } from "@/core/ops/server/api/router";
 
 const apiErrorLogger = getLogger(["server", "error"]);
 
@@ -93,7 +95,9 @@ const app = new Elysia({ prefix: "/api/v1" })
   .use(walletRouter)
   .use(accountRouter)
   .use(clubsRouter)
-  .use(roundsRouter);
+  .use(roundsRouter)
+  .use(directoryRouter)
+  .use(opsRouter);
 
 export default app;
 export type AppRouter = typeof app;
