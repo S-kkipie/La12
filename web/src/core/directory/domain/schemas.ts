@@ -2,7 +2,9 @@ import { z } from "zod";
 
 const clubDtoSchema = z.object({
   id: z.number().int(),
-  userId: z.string().nullable(),
+  // NOTE: `userId` (the club owner's better-auth id) is intentionally NOT on
+  // the public wire — data minimization for GET /api/v1/directory. The internal
+  // ClubWithRound domain shape still carries it (see types.ts).
   name: z.string(),
   slug: z.string(),
   logoUrl: z.string().nullable(),

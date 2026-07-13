@@ -23,7 +23,17 @@ export function computeFundedPct(raised: bigint, goal: bigint): number {
 
 export function toClubWithRoundDTO(c: ClubWithRound): ClubWithRoundDTO {
   return {
-    club: { ...c.club, createdAt: c.club.createdAt.toISOString() },
+    // `userId` (club owner's auth id) is deliberately omitted from the public
+    // wire DTO — data minimization; the internal ClubWithRound keeps it.
+    club: {
+      id: c.club.id,
+      name: c.club.name,
+      slug: c.club.slug,
+      logoUrl: c.club.logoUrl,
+      description: c.club.description,
+      walletAddress: c.club.walletAddress,
+      createdAt: c.club.createdAt.toISOString(),
+    },
     round: {
       ...c.round,
       deadline: c.round.deadline.toISOString(),
@@ -39,7 +49,9 @@ export function toClubWithRoundDTO(c: ClubWithRound): ClubWithRoundDTO {
  *  the DTO boundary symmetric and provable, matching the wallet domain template. */
 export function parseClubWithRoundDTO(d: ClubWithRoundDTO): ClubWithRound {
   return {
-    club: { ...d.club, createdAt: new Date(d.club.createdAt) },
+    // `userId` isn't carried on the wire (omitted from the DTO) — restore it as
+    // null; parse is exercised only by the round-trip test today.
+    club: { ...d.club, userId: null, createdAt: new Date(d.club.createdAt) },
     round: {
       ...d.round,
       deadline: new Date(d.round.deadline),
