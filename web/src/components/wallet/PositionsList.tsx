@@ -3,16 +3,30 @@
 import Link from "next/link";
 import { formatUsdt } from "@/lib/format";
 import { percentOfRound, type FanPosition } from "@/core/wallet/domain/types";
+import { convertUsdtToFiat, type SupportedCurrency } from "@/core/pricing/domain/types";
 import { ClaimPositionButton } from "./ClaimPositionButton";
 import { Card } from "@/components/ui/card";
 
 export function PositionsList({
   positions,
+  rate,
+  source,
+  currency,
   onClaimed,
 }: {
   positions: FanPosition[];
+  rate: number;
+  source: "live" | "fallback";
+  currency: SupportedCurrency;
   onClaimed: () => void;
 }) {
+  // Display-only fiat formatter — bigint base units in, string out (see spec).
+  const approx = source === "fallback" && currency !== "USD";
+  const toFiat = (baseUnits: bigint) =>
+    new Intl.NumberFormat(undefined, { style: "currency", currency }).format(
+      convertUsdtToFiat(baseUnits, rate),
+    );
+
   if (positions.length === 0) {
     return (
       <Card className="items-start gap-2 p-6">
@@ -49,7 +63,11 @@ export function PositionsList({
 
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
-                Invested {formatUsdt(p.investedUsdt)} USD₮ · {p.status}
+                Invested {formatUsdt(p.investedUsdt)} USD₮
+                <span className="opacity-70" title={approx ? "live rate unavailable — showing USD" : undefined}>
+                  {" "}({approx ? "≈ " : ""}{toFiat(p.investedUsdt)})
+                </span>{" "}
+                · {p.status}
               </span>
               <ClaimPositionButton roundAddress={p.contractAddress} claimable={p.claimable} onClaimed={onClaimed} />
             </div>
