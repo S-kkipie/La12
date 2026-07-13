@@ -1,36 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { formatUsdt, formatRelativeTime, explorerTxUrl } from "@/lib/format";
-import { parseDistribution, parseClubRound, type DistributionView, type ClubRoundView } from "./types";
+import { useClubs } from "@/core/clubs/client/hooks";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function RevenueDetail() {
-  const [dists, setDists] = useState<DistributionView[]>([]);
-  const [rounds, setRounds] = useState<ClubRoundView[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { useOverview, useDistributions } = useClubs();
+  const overviewQuery = useOverview();
+  const distributionsQuery = useDistributions();
 
-  const load = useCallback(async () => {
-    try {
-      const [overview, dist] = await Promise.all([
-        fetch("/api/club/overview").then((r) => r.json()),
-        fetch("/api/club/distributions").then((r) => r.json()),
-      ]);
-      setRounds((overview.rounds ?? []).map(parseClubRound));
-      setDists((dist.distributions ?? []).map(parseDistribution));
-    } catch {
-      /* leave empty */
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
+  const loading = overviewQuery.isLoading || distributionsQuery.isLoading;
   if (loading) return <Skeleton className="mx-auto h-64 w-full max-w-3xl" />;
+
+  const rounds = overviewQuery.data?.rounds ?? [];
+  const dists = distributionsQuery.data?.distributions ?? [];
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">

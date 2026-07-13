@@ -1,13 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { friendlyError } from "@/lib/txError";
-import {
-  parseClubTotals, parseClubRound, seriesToPoints,
-  type ClubTotalsView, type ClubRoundView, type SeriesPointDTO,
-} from "./types";
+import { useClubs } from "@/core/clubs/client/hooks";
+import { seriesToPoints, type ClubRoundView } from "./types";
 import { ClubHero } from "./ClubHero";
 import { RevenueChart } from "./RevenueChart";
 import { ClubRoundsList } from "./ClubRoundsList";
@@ -15,7 +12,6 @@ import { DistributeDialog } from "./DistributeDialog";
 import { CloseRoundDialog } from "./CloseRoundDialog";
 import { HoldersDialog } from "./HoldersDialog";
 import { CreateRoundDialog } from "./CreateRoundDialog";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function ClubOverview({
@@ -28,11 +24,9 @@ export function ClubOverview({
   usdtAddress: `0x${string}` | undefined;
 }) {
   const searchParams = useSearchParams();
-  const [totals, setTotals] = useState<ClubTotalsView | null>(null);
-  const [rounds, setRounds] = useState<ClubRoundView[]>([]);
-  const [points, setPoints] = useState<{ ts: number; usdt: number }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { useOverview, useDistributions } = useClubs();
+  const overviewQuery = useOverview();
+  const distributionsQuery = useDistributions();
 
   const [distributeRound, setDistributeRound] = useState<ClubRoundView | null>(null);
   const [holdersRound, setHoldersRound] = useState<ClubRoundView | null>(null);
@@ -47,26 +41,13 @@ export function ClubOverview({
     setCreateOpen(true);
   }, [usdtAddress]);
 
-  const refresh = useCallback(async () => {
-    setError(null);
-    try {
-      const [overview, dist] = await Promise.all([
-        fetch("/api/club/overview").then((r) => r.json()),
-        fetch("/api/club/distributions").then((r) => r.json()),
-      ]);
-      setTotals(parseClubTotals(overview.totals));
-      setRounds((overview.rounds ?? []).map(parseClubRound));
-      setPoints(seriesToPoints((dist.series ?? []) as SeriesPointDTO[]));
-    } catch (err) {
-      setError(friendlyError(err));
-    } finally {
-      setLoading(false);
-    }
+  const refresh = useCallback(() => {
+    void overviewQuery.refetch();
+    void distributionsQuery.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  const loading = overviewQuery.isLoading || distributionsQuery.isLoading;
 
   if (loading) {
     return (
@@ -76,13 +57,13 @@ export function ClubOverview({
       </div>
     );
   }
-  if (error || !totals) {
-    return (
-      <Card className="mx-auto max-w-4xl border-destructive/40 bg-destructive/10 p-5 text-destructive">
-        Could not load your dashboard: {error ?? "unknown error"}
-      </Card>
-    );
-  }
+
+  // The overview/distributions services are graceful-empty (200 on any read
+  // failure) — a query error here is a network/transport failure, not an API
+  // 4xx/5xx. Fall back to zeroed data rather than blocking the dashboard.
+  const totals = overviewQuery.data?.totals ?? { raised: 0n, distributed: 0n, roundCount: 0, backerCount: 0 };
+  const rounds = overviewQuery.data?.rounds ?? [];
+  const points = seriesToPoints(distributionsQuery.data?.series ?? []);
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">

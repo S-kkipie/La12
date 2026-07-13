@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { formatUsdt, shortenAddress, explorerTxUrl } from "@/lib/format";
-import { parseHolder, type HolderView } from "./types";
+import { useClubs } from "@/core/clubs/client/hooks";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -15,24 +14,9 @@ export function HoldersDialog({
   onOpenChange: (v: boolean) => void;
   round: { contractAddress: `0x${string}`; name: string };
 }) {
-  const [holders, setHolders] = useState<HolderView[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/club/holders?round=${round.contractAddress}`).then((r) => r.json());
-      setHolders((res.holders ?? []).map(parseHolder));
-    } catch {
-      /* leave empty */
-    } finally {
-      setLoading(false);
-    }
-  }, [round.contractAddress]);
-
-  useEffect(() => {
-    if (open) void load();
-  }, [open, load]);
+  const { useHolders } = useClubs();
+  const holdersQuery = useHolders(round.contractAddress);
+  const holders = holdersQuery.data ?? [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -41,7 +25,7 @@ export function HoldersDialog({
           <DialogTitle>Backers</DialogTitle>
           <DialogDescription>{round.name}</DialogDescription>
         </DialogHeader>
-        {loading ? (
+        {holdersQuery.isLoading ? (
           <Skeleton className="h-32 w-full" />
         ) : holders.length === 0 ? (
           <div className="py-6 text-center text-sm text-muted-foreground">No backers yet.</div>
