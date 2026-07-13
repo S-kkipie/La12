@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert";
 import { fundGas } from "../fund-gas-service";
-import { checkRateLimit } from "../../rate-limit";
+import { checkGasRateLimit } from "../../rate-limit";
 
 const ADDR = "0x1111111111111111111111111111111111111111" as const;
 // Distinct address for the throttle test so the happy-path calls above (which
@@ -45,14 +45,14 @@ test("fundGas: a second immediate call for the same address is throttled -> 429"
   // First call records the address in the real module-level limiter and succeeds.
   const first = await fundGas({
     address: RATE_ADDR,
-    isRateLimited: checkRateLimit,
+    isRateLimited: checkGasRateLimit,
     sendGas: async () => ({ hash: "0xhash" as const }),
   });
   assert.strictEqual(first.ok, true);
   // Second immediate call is within the 60-min window → 429, engine never runs.
   const second = await fundGas({
     address: RATE_ADDR,
-    isRateLimited: checkRateLimit,
+    isRateLimited: checkGasRateLimit,
     sendGas: async () => {
       throw new Error("should not be called when rate-limited");
     },

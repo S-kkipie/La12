@@ -1,7 +1,7 @@
 import "server-only";
 import { type AsyncAppResult, ok, err, AppErrors } from "@/server/common/responses";
 import { mintTestUsdt as mintUsdtEngine, type FaucetUsdtResult } from "@/lib/faucetUsdt";
-import { checkRateLimit } from "../rate-limit";
+import { checkUsdtRateLimit } from "../rate-limit";
 import type { MintUsdtResult } from "@/core/ops/domain/types";
 
 type MintUsdtDeps = {
@@ -28,5 +28,5 @@ export async function mintUsdt(deps: MintUsdtDeps): AsyncAppResult<MintUsdtResul
 }
 
 export function mintUsdtService(address: `0x${string}`): AsyncAppResult<MintUsdtResult> {
-  return mintUsdt({ address, isRateLimited: checkRateLimit, mint: mintUsdtEngine });
+  return mintUsdt({ address, isRateLimited: checkUsdtRateLimit, mint: mintUsdtEngine });
 }

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert";
 import { mintUsdt } from "../mint-usdt-service";
-import { checkRateLimit } from "../../rate-limit";
+import { checkUsdtRateLimit } from "../../rate-limit";
 
 const ADDR = "0x1111111111111111111111111111111111111111" as const;
 // Distinct address for the throttle test. NOTE: each test file runs in its own
@@ -45,13 +45,13 @@ test("mintUsdt: a throwing engine yields err(unexpected) -> 500", async () => {
 test("mintUsdt: a second immediate call for the same address is throttled -> 429", async () => {
   const first = await mintUsdt({
     address: RATE_ADDR,
-    isRateLimited: checkRateLimit,
+    isRateLimited: checkUsdtRateLimit,
     mint: async () => ({ hash: "0xhash" as const, amount: 5_000000000n }),
   });
   assert.strictEqual(first.ok, true);
   const second = await mintUsdt({
     address: RATE_ADDR,
-    isRateLimited: checkRateLimit,
+    isRateLimited: checkUsdtRateLimit,
     mint: async () => {
       throw new Error("should not be called when rate-limited");
     },

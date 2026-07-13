@@ -1,7 +1,7 @@
 import "server-only";
 import { type AsyncAppResult, ok, err, AppErrors } from "@/server/common/responses";
 import { fundGas as sendGasSponsored, type FundGasResult } from "@/lib/sponsor";
-import { checkRateLimit } from "../rate-limit";
+import { checkGasRateLimit } from "../rate-limit";
 import type { FaucetResult } from "@/core/ops/domain/types";
 
 /** Deps injected so the wrapper is testable without a real relayer/RPC or the
@@ -31,5 +31,5 @@ export async function fundGas(deps: FundGasDeps): AsyncAppResult<FaucetResult> {
  *  IN PLACE — this lib is NOT relocated (decoupling constraint 2: the P4
  *  branch, on `main`, also imports it from this same path). */
 export function fundGasService(address: `0x${string}`): AsyncAppResult<FaucetResult> {
-  return fundGas({ address, isRateLimited: checkRateLimit, sendGas: sendGasSponsored });
+  return fundGas({ address, isRateLimited: checkGasRateLimit, sendGas: sendGasSponsored });
 }
