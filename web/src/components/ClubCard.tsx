@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatBps } from "@/lib/format";
-import type { ClubWithRound } from "@/lib/clubDirectory";
+import type { ClubWithRound } from "@/core/directory/domain/types";
 
 export function ClubCard({ club, round, pct }: ClubWithRound) {
   return (

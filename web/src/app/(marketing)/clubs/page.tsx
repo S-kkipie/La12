@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listClubsWithRounds } from "@/lib/clubDirectory";
+import { listDirectoryService } from "@/core/directory/server/services/list-directory-service";
 import { ClubCard } from "@/components/ClubCard";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function ClubsPage() {
-  const clubs = await listClubsWithRounds();
+  const directoryResult = await listDirectoryService();
+  const clubs = directoryResult.ok ? directoryResult.data : [];
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-16">

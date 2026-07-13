@@ -2,7 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { ArrowRight, ShieldCheck, Repeat, TrendingUp, Trophy } from "lucide-react";
 import { auth } from "@/server/auth/auth";
-import { listClubsWithRounds } from "@/lib/clubDirectory";
+import { listDirectoryService } from "@/core/directory/server/services/list-directory-service";
 import { ClubCard } from "@/components/ClubCard";
 import { formatUsdt, formatBps, formatCapMultiple } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,8 @@ function compactUsd(baseUnits: bigint): string {
 
 export default async function Home() {
   const session = await auth.api.getSession({ headers: await headers() });
-  const clubs = await listClubsWithRounds();
+  const directoryResult = await listDirectoryService();
+  const clubs = directoryResult.ok ? directoryResult.data : [];
   const featured = clubs[0] ?? null;
 
   // No club has a verified round yet — keep today's exact placeholder copy

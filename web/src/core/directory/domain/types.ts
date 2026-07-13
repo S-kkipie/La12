@@ -16,7 +16,7 @@ export type ClubWithRoundDTO = z.infer<typeof clubWithRoundSchema>;
 
 /** Same integer math RoundProgress.tsx's progress bar already uses
  *  (`Math.min(100, Number((raised * 100n) / goal))`) — moved verbatim out of
- *  the legacy `lib/clubDirectory.ts`. */
+ *  the legacy `clubDirectory.ts` helper (since deleted). */
 export function computeFundedPct(raised: bigint, goal: bigint): number {
   return goal > 0n ? Math.min(100, Number((raised * 100n) / goal)) : 0;
 }

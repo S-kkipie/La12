@@ -15,6 +15,7 @@ import {
 } from "@/server/common/responses";
 import { walletRouter } from "@/core/wallet/server/api/router";
 import { accountRouter } from "@/core/account/server/api/router";
+import { directoryRouter } from "@/core/directory/server/api/router";
 
 const apiErrorLogger = getLogger(["server", "error"]);
 
@@ -89,7 +90,8 @@ const app = new Elysia({ prefix: "/api/v1" })
     detail: { tags: ["Common"], summary: "Liveness probe" },
   })
   .use(walletRouter)
-  .use(accountRouter);
+  .use(accountRouter)
+  .use(directoryRouter);
 
 export default app;
 export type AppRouter = typeof app;

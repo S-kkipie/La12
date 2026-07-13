@@ -9,7 +9,7 @@ export type ClubRoundRow = { club: Club; round: Round };
  *  constraint: this worktree has no `core/clubs`/`core/rounds` to import;
  *  those live on the parallel P3+P4 branch). Every club with a VERIFIED
  *  round (RoundFactory.createRound is permissionless on-chain, so `verified`
- *  is the off-chain allowlist gate — same as the legacy lib/clubDirectory.ts). */
+ *  is the off-chain allowlist gate — same as the legacy clubDirectory.ts helper). */
 export async function listClubsWithRoundsRows(): Promise<ClubRoundRow[]> {
   return db
     .select({ club: clubs, round: rounds })
