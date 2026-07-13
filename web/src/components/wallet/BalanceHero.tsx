@@ -3,18 +3,25 @@
 import { toast } from "sonner";
 import { Copy } from "lucide-react";
 import { formatUsdt, shortenAddress } from "@/lib/format";
+import { convertUsdtToFiat, type SupportedCurrency } from "@/core/pricing/domain/types";
 import { WalletModeChip } from "@/components/shell/WalletModeChip";
 import { Button } from "@/components/ui/button";
 
 export function BalanceHero({
   address,
   balance,
+  rate,
+  source,
+  currency,
   onSend,
   onReceive,
   onAddFunds,
 }: {
   address: string;
   balance: bigint;
+  rate: number;
+  source: "live" | "fallback";
+  currency: SupportedCurrency;
   onSend: () => void;
   onReceive: () => void;
   onAddFunds: () => void;
@@ -24,6 +31,13 @@ export function BalanceHero({
     toast.success("Address copied");
   }
 
+  // Display-only fiat value — bigint base units in, formatted string out; the
+  // float never re-enters a money path. ≈ flags a USD fallback for non-USD.
+  const approx = source === "fallback" && currency !== "USD";
+  const fiat = new Intl.NumberFormat(undefined, { style: "currency", currency }).format(
+    convertUsdtToFiat(balance, rate),
+  );
+
   return (
     <div className="glow flex flex-col gap-6 rounded-xl bg-primary p-6 text-primary-foreground md:col-span-2">
       <div className="flex items-start justify-between">
@@ -31,6 +45,12 @@ export function BalanceHero({
           <div className="text-xs font-semibold uppercase tracking-widest opacity-70">USD₮ balance</div>
           <div className="font-display text-5xl tracking-wide md:text-6xl">
             {formatUsdt(balance)} <span className="text-2xl">USD₮</span>
+          </div>
+          <div
+            className="text-sm opacity-70"
+            title={approx ? "live rate unavailable — showing USD" : undefined}
+          >
+            {approx ? "≈ " : ""}{fiat}
           </div>
         </div>
         <WalletModeChip />

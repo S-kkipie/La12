@@ -8,10 +8,13 @@ import { useElysia } from "@/frontend/lib/eden";
 import { createWallet, getWallet, type WalletHandle } from "@/lib/wdk";
 import { friendlyError } from "@/lib/txError";
 import { useWalletPositions, useWalletHistory } from "@/core/wallet/client/hooks";
+import { usePricing } from "@/core/pricing/client/hooks";
+import { useCurrency } from "@/core/pricing/client/use-currency";
 import { BalanceHero } from "./BalanceHero";
 import { StatCards } from "./StatCards";
 import { PositionsList } from "./PositionsList";
 import { ActivityPanel } from "./ActivityPanel";
+import { CurrencySelect } from "./CurrencySelect";
 import { SendDialog } from "./SendDialog";
 import { ReceiveDialog } from "./ReceiveDialog";
 import { AddFundsDialog } from "./AddFundsDialog";
@@ -23,6 +26,13 @@ export function WalletOverview() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const walletProxy = useElysia().wallet;
+
+  // Display currency + its USD₮→fiat rate — one page-level fetch, threaded into
+  // the balance + position cards. Rates are display-only; money stays USD₮.
+  const [currency, setCurrency] = useCurrency();
+  const rateQuery = usePricing().useRate(currency);
+  const rate = rateQuery.data?.rate ?? 1;
+  const rateSource = rateQuery.data?.source ?? "fallback";
 
   const [wallet, setWallet] = useState<WalletHandle | null>(null);
   const [balance, setBalance] = useState<bigint>(0n);
@@ -96,11 +106,18 @@ export function WalletOverview() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+      <div className="flex items-center justify-end">
+        <CurrencySelect value={currency} onChange={setCurrency} />
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         {wallet && (
           <BalanceHero
             address={wallet.address}
             balance={balance}
+            rate={rate}
+            source={rateSource}
+            currency={currency}
             onSend={() => setDialog("send")}
             onReceive={() => setDialog("receive")}
             onAddFunds={() => setDialog("addFunds")}
@@ -115,7 +132,13 @@ export function WalletOverview() {
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="flex flex-col gap-3 lg:col-span-2">
           <h2 className="font-display text-xl uppercase tracking-wide">Your positions</h2>
-          <PositionsList positions={positions} onClaimed={refetchWallet} />
+          <PositionsList
+            positions={positions}
+            rate={rate}
+            source={rateSource}
+            currency={currency}
+            onClaimed={refetchWallet}
+          />
         </div>
         <ActivityPanel entries={activity} />
       </div>
