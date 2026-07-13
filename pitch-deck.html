@@ -208,6 +208,16 @@
   .links a { font-family: var(--font-mono); font-size: .85rem; letter-spacing: .04em; color: var(--fg); text-decoration: none; border: 1px solid var(--line-strong); border-radius: 3px; padding: .6rem 1rem; transition: border-color .18s ease, color .18s ease; }
   .links a:hover { border-color: var(--turf); color: var(--turf); }
 
+  /* Tether-stack ledger */
+  .ledger { border-top: 1px solid var(--line-strong); margin-top: 1.4rem; }
+  .lrow { display: grid; grid-template-columns: 1.05fr 1.25fr 1.7fr 1.45fr; gap: 1.1rem; padding: .58rem .2rem; border-bottom: 1px solid var(--line); font-size: .86rem; line-height: 1.28; align-items: start; }
+  .lrow.lhead { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-muted); }
+  .lrow span:not(.lp) { color: var(--fg); }
+  .lrow .lp { font-family: var(--font-display); text-transform: uppercase; color: var(--turf); font-size: 1.02rem; letter-spacing: .01em; line-height: 1.02; }
+  .lrow .lp i { display: block; font-family: var(--font-mono); font-style: normal; font-size: .58rem; color: var(--flood); letter-spacing: .16em; margin-top: .2rem; }
+  .lrow .to { color: var(--fg-muted); }
+  .ledger + .ledgernote { margin-top: 1rem; font-size: .82rem; }
+
   a:focus-visible, .card:focus-visible, .themebtn:focus-visible { outline: 2px solid var(--turf); outline-offset: 3px; }
 
   [data-reveal] { opacity: 0; transform: translateY(18px); transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1); }
@@ -272,7 +282,7 @@
       <div class="spot"></div>
     </div>
     <div class="wrap">
-      <p class="eyebrow" data-reveal>Tether WDK Cup 2026 · Football track · Deadline Jul 14</p>
+      <p class="eyebrow" data-reveal>Tether · Build with WDK track · Semifinal submission</p>
       <div class="hero__grid">
         <div>
           <h1 class="display wordmark" data-reveal data-d="1">La <span class="doce">Doce</span></h1>
@@ -416,6 +426,56 @@
     </div>
   </section>
 
+  <!-- TETHER STACK LEDGER -->
+  <section class="panel" id="stack">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>The Tether stack — chosen, wired, traded-off</p>
+      <h2 class="display" data-reveal data-d="1">Every piece. Why. How. Trade-off.</h2>
+      <div class="ledger" data-reveal data-d="2">
+        <div class="lrow lhead">
+          <span>Piece</span><span>Why we chose it</span><span>How we wired it</span><span>Trade-off we accepted</span>
+        </div>
+        <div class="lrow">
+          <span class="lp">Wallet self-custody <i>tier 1</i></span>
+          <span>Fan owns funds; the server must not be able to move them.</span>
+          <span>Seed made client-side, AES-GCM encrypted with a non-extractable per-device key, IndexedDB.</span>
+          <span class="to">Key bound to the browser → export/import recovery (roadmap: ERC-4337 social).</span>
+        </div>
+        <div class="lrow">
+          <span class="lp">USD₮ transfers <i>tier 1</i></span>
+          <span>Invest and claim are USD₮ movements — the core loop.</span>
+          <span>One <span class="mono">WalletHandle</span>, base-unit <span class="mono">bigint</span>, 6 decimals, strings on the wire.</span>
+          <span class="to">bigint discipline end-to-end vs floats — no precision loss on money.</span>
+        </div>
+        <div class="lrow">
+          <span class="lp">Gas sponsor + ERC-4337 <i>tier 1</i></span>
+          <span>New fan has 0 ETH; on mainnet the gas is paid in USD₮.</span>
+          <span>Relayer spends only its own ETH (approach B); Safe + paymaster; per-address rate-limit = drain defense.</span>
+          <span class="to">Live gasless gated on paymaster provisioning; the code path is complete.</span>
+        </div>
+        <div class="lrow">
+          <span class="lp">Indexer <i>tier 2</i></span>
+          <span>Real USD₮ transfer history, fast, without hand-scanning the chain.</span>
+          <span>Hosted REST (<span class="mono">x-api-key</span>, server-only) + viem <span class="mono">getLogs</span> fallback → Activity never empty.</span>
+          <span class="to">Fallback under-counts very old rounds (block window) — documented degradation.</span>
+        </div>
+        <div class="lrow">
+          <span class="lp">MoonPay <i>tier 3</i></span>
+          <span>Fund with a card — kills "go get crypto first".</span>
+          <span>MoonPay widget URL HMAC-signed server-side; the secret never reaches the client.</span>
+          <span class="to">Signed URL vs full SDK — fastest correct integration; webhook recon = roadmap.</span>
+        </div>
+        <div class="lrow">
+          <span class="lp">Price Rates <i>tier 4</i></span>
+          <span>Fans think in local currency — show balances in USD/EUR/GBP.</span>
+          <span>Bitfinex-backed rate, server-side + cache; USD short-circuits to 1.0; miss degrades to 1.0 marked <span class="mono">≈</span>.</span>
+          <span class="to">USD₮≈USD, so it's UX polish, not money math — failure mode is "show USD".</span>
+        </div>
+      </div>
+      <p class="muted ledgernote" data-reveal data-d="3">"We used it" scores far below <strong class="hl">"we chose it for X, wired it like Y, and accepted trade-off Z."</strong> Commit-pinned permalinks per piece in <span class="mono">TETHER_STACK.md</span>. Velora (swap) + Aave (yield) — designed, on roadmap.</p>
+    </div>
+  </section>
+
   <!-- STATUS -->
   <section class="panel" id="status">
     <div class="wrap">
@@ -431,6 +491,7 @@
         <div class="item"><span>Dual-mode wallet (standard + ERC-4337 gasless) — code + reviewed; contracts on Sepolia</span><span class="pill done">✓ done</span></div>
         <div class="item"><span>Test faucets (USD₮ + gas) — run it with no real money</span><span class="pill done">✓ done</span></div>
         <div class="item"><span>Live gasless on Sepolia (gas paid in token) — pending Candide provisioning</span><span class="pill wip">◷ pending</span></div>
+        <div class="item"><span>Price Rates fiat · P2P secondary market · invest-with-any-token (Velora) · funding-float yield (Aave) — designed</span><span class="pill wip">◷ roadmap</span></div>
       </div>
     </div>
   </section>
@@ -479,8 +540,9 @@
       <p class="wow" data-reveal data-d="1" style="max-width:20em">The 12th player is on the cap table.</p>
       <div class="links" data-reveal data-d="2">
         <a href="https://github.com/S-kkipie/La12" target="_blank" rel="noopener">github.com/S-kkipie/La12</a>
-        <a href="#cover">License: MIT</a>
-        <a href="#cover">Tether WDK Cup 2026</a>
+        <a href="https://la12.aido.lat" target="_blank" rel="noopener">la12.aido.lat</a>
+        <a href="https://pirulines.aido.lat" target="_blank" rel="noopener">pirulines.aido.lat</a>
+        <a href="#cover">Build with WDK · Semifinal</a>
       </div>
     </div>
   </section>
