@@ -118,12 +118,12 @@ Each ops service is a thin `AsyncAppResult` wrapper around the existing engine (
 | Route | Statuses |
 |---|---|
 | `GET /directory` | 200 (graceful-empty; no macro) |
-| `POST /ops/faucet` | 200, 422 (bad address), 500 |
-| `POST /ops/faucet-usdt` | 200, 422, 500 |
+| `POST /ops/faucet` | 200, **429** (per-address throttle — restored from legacy, §2), 422 (bad address), 500 |
+| `POST /ops/faucet-usdt` | 200, **429** (throttle), 422, 500 |
 | `POST /ops/moonpay` | 200, 422 (bad address/amount), 500 |
-| `POST /ops/sync` | 200, 422, 500 |
+| `POST /ops/sync` | 200, **404** (round not found) / **403** (round not verified), 422, 500 |
 
-All single-error-status (500) routes use the wallet template `as 500` cast + `{200, 422-via-onError, 500}` map. Validation (zod) = 422 array `targets`, handled by root `onError` (untouched).
+faucet/faucet-usdt widen the wallet template cast to `as 429 | 500` + `429: errorResponseSchema(429)` (the per-address in-memory throttle: `SPONSOR_PK` funds a real relayer, so an unthrottled public POST is a drain vector — the legacy routes threw 429, this is preserved). sync widens to `as 403 | 404 | 500` (its allowlist check). moonpay stays `{200,500}`. Validation (zod) = 422 array `targets`, handled by root `onError` (untouched).
 
 ---
 
